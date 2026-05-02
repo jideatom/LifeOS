@@ -11,7 +11,8 @@ import {
   Utensils,
 } from 'lucide-react'
 import type { CSSProperties } from 'react'
-import { todayPlan } from './data/today'
+import { useMemo, useState } from 'react'
+import { getPlanForDate, getWeekPreview, shiftDate, todayIso } from './data/today'
 import { fastingProgress } from './domain/lifeos'
 import './App.css'
 import './TodayDashboard.css'
@@ -22,10 +23,12 @@ function readinessLabel(readiness: string) {
   return 'Recovery day'
 }
 
-const progress = fastingProgress(todayPlan.fasting)
-
 function App() {
+  const [selectedDate, setSelectedDate] = useState(todayIso)
+  const todayPlan = useMemo(() => getPlanForDate(selectedDate), [selectedDate])
+  const weekPreview = useMemo(() => getWeekPreview(selectedDate), [selectedDate])
   const { log, fasting, meals, workout, syncMetrics, priorities } = todayPlan
+  const progress = fastingProgress(fasting)
 
   const commandSignals = [
     {
@@ -94,7 +97,7 @@ function App() {
       <section className="workspace">
         <header className="topbar">
           <div>
-            <span className="eyebrow">May 2026 build</span>
+            <span className="eyebrow">Lifelong rhythm</span>
             <h1>Today Command Center</h1>
           </div>
           <div className={`readiness readiness-${log.readiness.toLowerCase()}`}>
@@ -102,6 +105,40 @@ function App() {
             <strong>{readinessLabel(log.readiness)}</strong>
           </div>
         </header>
+
+        <section className="date-console" aria-label="Plan date controls">
+          <div>
+            <span className="eyebrow">{log.day}</span>
+            <strong>{log.date}</strong>
+            <p>{log.dayType} · {log.fastProtocol} · {workout.plan}</p>
+          </div>
+          <div className="date-actions">
+            <button type="button" onClick={() => setSelectedDate((date) => shiftDate(date, -1))}>
+              Previous
+            </button>
+            <button type="button" onClick={() => setSelectedDate(todayIso())}>
+              Today
+            </button>
+            <button type="button" onClick={() => setSelectedDate((date) => shiftDate(date, 1))}>
+              Next
+            </button>
+          </div>
+        </section>
+
+        <section className="week-strip" aria-label="Seven day rhythm preview">
+          {weekPreview.map((day) => (
+            <button
+              className={day.date === selectedDate ? 'active' : ''}
+              type="button"
+              key={day.date}
+              onClick={() => setSelectedDate(day.date)}
+            >
+              <span>{day.day}</span>
+              <strong>{day.date.slice(5)}</strong>
+              <small>{day.type}</small>
+            </button>
+          ))}
+        </section>
 
         <section id="today" className="hero-grid">
           <article id="fasting" className="fast-card">
