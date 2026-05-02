@@ -11,6 +11,78 @@ h3 {
   border-color: rgba(192, 53, 43, 0.45);
 }
 
+.date-console {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 12px;
+  padding: 14px;
+  border: 1px solid rgba(23, 32, 29, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 253, 248, 0.92);
+}
+
+.date-console strong {
+  display: block;
+  margin-top: 3px;
+  font-size: 22px;
+}
+
+.date-console p {
+  color: #56655f;
+  line-height: 1.5;
+}
+
+.date-actions,
+.week-strip {
+  display: flex;
+  gap: 8px;
+}
+
+.date-actions button,
+.week-strip button {
+  min-height: 38px;
+  border: 1px solid rgba(23, 32, 29, 0.12);
+  border-radius: 8px;
+  background: #fffdf8;
+  color: #273631;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.date-actions button {
+  padding: 0 14px;
+}
+
+.date-actions button:hover,
+.week-strip button:hover,
+.week-strip button.active {
+  border-color: rgba(27, 94, 89, 0.38);
+  background: rgba(27, 94, 89, 0.12);
+}
+
+.week-strip {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  margin-bottom: 16px;
+}
+
+.week-strip button {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  text-align: left;
+}
+
+.week-strip span,
+.week-strip small {
+  color: #63726d;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
 .fast-ring {
   --fast-progress: 0%;
   background:
@@ -153,6 +225,15 @@ h3 {
 }
 
 @media (max-width: 720px) {
+  .date-console {
+    display: grid;
+  }
+
+  .date-actions,
+  .week-strip {
+    grid-template-columns: 1fr;
+  }
+
   .meal-row,
   .metric-grid {
     grid-template-columns: 1fr;
