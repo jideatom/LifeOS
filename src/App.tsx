@@ -2,7 +2,10 @@ import {
   Apple,
   CalendarDays,
   CheckCircle2,
+  Database,
   Dumbbell,
+  ExternalLink,
+  Flame,
   Gauge,
   HeartPulse,
   Moon,
@@ -17,6 +20,9 @@ import { fastingProgress } from './domain/lifeos'
 import './App.css'
 import './TodayDashboard.css'
 
+const NOTION_LIFEOS_URL =
+  'https://app.notion.com/p/3524ab8a5f28809facbee1cf935ebad2?v=f248fa787b3e40f8bb2bb98a4457a342&source=copy_link'
+
 function readinessLabel(readiness: string) {
   if (readiness === 'Green') return 'Train as planned'
   if (readiness === 'Yellow') return 'Train, hold load'
@@ -27,8 +33,9 @@ function App() {
   const [selectedDate, setSelectedDate] = useState(todayIso)
   const todayPlan = useMemo(() => getPlanForDate(selectedDate), [selectedDate])
   const weekPreview = useMemo(() => getWeekPreview(selectedDate), [selectedDate])
-  const { log, fasting, meals, workout, syncMetrics, priorities } = todayPlan
+  const { log, fasting, fastingPhases, meals, workout, syncMetrics, priorities } = todayPlan
   const progress = fastingProgress(fasting)
+  const activeFastingPhase = fastingPhases.find((phase) => phase.status === 'Active') ?? fastingPhases[0]
 
   const commandSignals = [
     {
@@ -90,6 +97,15 @@ function App() {
           <a href="#sync">
             <Smartphone size={18} aria-hidden="true" />
             Sync
+          </a>
+          <a href="#fasting-phases">
+            <Flame size={18} aria-hidden="true" />
+            Fast Phases
+          </a>
+          <a href={NOTION_LIFEOS_URL} target="_blank" rel="noreferrer">
+            <Database size={18} aria-hidden="true" />
+            Notion
+            <ExternalLink className="nav-external" size={14} aria-hidden="true" />
           </a>
         </nav>
       </aside>
@@ -172,6 +188,11 @@ function App() {
               <strong>{fasting.protocol}</strong>
               <span>{fasting.hydrationTargetLiters}L water target</span>
             </div>
+            <div className="phase-callout">
+              <span>Current phase</span>
+              <strong>{activeFastingPhase.name}</strong>
+              <p>{activeFastingPhase.essence}</p>
+            </div>
           </article>
 
           <div className="signal-grid">
@@ -241,6 +262,28 @@ function App() {
             </div>
           </article>
 
+          <article id="fasting-phases" className="panel fasting-phases-panel">
+            <div className="panel-title">
+              <Flame size={20} aria-hidden="true" />
+              <h2>Fasting Phases</h2>
+            </div>
+            <div className="phase-stack">
+              {fastingPhases.map((phase) => (
+                <section className={`phase-row phase-${phase.status.toLowerCase()}`} key={phase.id}>
+                  <div className="phase-marker">
+                    <strong>{phase.window}</strong>
+                    <span>{phase.status}</span>
+                  </div>
+                  <div>
+                    <h3>{phase.name}</h3>
+                    <p>{phase.essence}</p>
+                    <small>{phase.healthNote}</small>
+                  </div>
+                </section>
+              ))}
+            </div>
+          </article>
+
           <article id="sync" className="panel sync-panel">
             <div className="panel-title">
               <Smartphone size={20} aria-hidden="true" />
@@ -280,8 +323,9 @@ function App() {
               <h2>Notion Backbone</h2>
             </div>
             <p className="muted">
+              Command Center captures the day. Notion remains the editable source of truth for the
               Daily Health Log, Fasting Sessions, Meal Plan, Workout Log, Exercise Library, Fitbit
-              Sync Inbox, and Weekly Reviews remain the editable source of truth.
+              Sync Inbox, and Weekly Reviews.
             </p>
           </article>
         </section>

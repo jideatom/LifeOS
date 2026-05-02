@@ -1,6 +1,7 @@
 import type {
   DailyCommandPlan,
   DayType,
+  FastingPhase,
   FastingSession,
   MealPlanItem,
   NutritionMode,
@@ -10,6 +11,57 @@ import type {
 import { computeReadiness } from '../domain/lifeos'
 
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+
+const FASTING_PHASE_LIBRARY: Omit<FastingPhase, 'status'>[] = [
+  {
+    id: 'fed',
+    name: 'Fed state',
+    window: '0-4h',
+    startsAtHour: 0,
+    essence: 'Food is still being digested and stored.',
+    healthNote: 'Keep this window calm: protein first, hydrate, and avoid turning supper into a second dinner.',
+  },
+  {
+    id: 'blood-sugar',
+    name: 'Blood sugar settling',
+    window: '4-8h',
+    startsAtHour: 4,
+    essence: 'Insulin trends down and the body starts using stored fuel between meals.',
+    healthNote: 'This is where late-night snacking usually breaks the plan. Water, tea, and sleep protect the fast.',
+  },
+  {
+    id: 'glycogen',
+    name: 'Glycogen shift',
+    window: '8-12h',
+    startsAtHour: 8,
+    essence: 'The body leans more on stored glycogen and begins moving toward more fat use.',
+    healthNote: 'Good zone for morning focus. Electrolytes help if you feel flat or headachy.',
+  },
+  {
+    id: 'fat-burning',
+    name: 'Fat-burning phase',
+    window: '12-16h',
+    startsAtHour: 12,
+    essence: 'Fat oxidation tends to rise as the fast gets longer.',
+    healthNote: 'This is the practical 16:8 sweet spot: strong enough for consistency without wrecking training.',
+  },
+  {
+    id: 'ketone',
+    name: 'Ketone rise',
+    window: '16-20h',
+    startsAtHour: 16,
+    essence: 'Ketones may become more noticeable, especially when carbs have been low.',
+    healthNote: 'Useful for appetite control, but heavy lifting may need load discipline if readiness is low.',
+  },
+  {
+    id: 'autophagy',
+    name: 'Autophagy support',
+    window: '20h+',
+    startsAtHour: 20,
+    essence: 'Cell cleanup pathways are thought to increase with longer fasts, but timing varies by person.',
+    healthNote: 'Treat this as an occasional advanced phase, not a daily requirement. Recovery still matters.',
+  },
+]
 
 function dateFromIso(dateIso: string) {
   return new Date(`${dateIso}T12:00:00`)
@@ -85,6 +137,20 @@ function fastingForDate(dateIso: string): FastingSession {
     elapsedHours: 11,
     hydrationTargetLiters: 3.2,
   }
+}
+
+function fastingPhasesForSession(session: FastingSession): FastingPhase[] {
+  return FASTING_PHASE_LIBRARY.map((phase, index) => {
+    const nextPhase = FASTING_PHASE_LIBRARY[index + 1]
+    const isActive =
+      session.elapsedHours >= phase.startsAtHour &&
+      (nextPhase === undefined || session.elapsedHours < nextPhase.startsAtHour)
+
+    return {
+      ...phase,
+      status: isActive ? 'Active' : session.elapsedHours >= phase.startsAtHour ? 'Completed' : 'Upcoming',
+    }
+  })
 }
 
 function mealsForDate(dateIso: string): MealPlanItem[] {
@@ -261,6 +327,7 @@ export function getPlanForDate(dateIso: string): DailyCommandPlan {
       ...importedSignals,
     },
     fasting,
+    fastingPhases: fastingPhasesForSession(fasting),
     meals: mealsForDate(dateIso),
     workout,
     syncMetrics: [

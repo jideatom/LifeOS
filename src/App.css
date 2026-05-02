@@ -80,6 +80,10 @@ nav a:hover {
   background: rgba(27, 94, 89, 0.12);
 }
 
+.nav-external {
+  margin-left: auto;
+}
+
 .workspace {
   padding: 30px;
 }
@@ -229,6 +233,35 @@ h3 {
   align-items: center;
   gap: 12px;
   margin-top: 8px;
+}
+
+.phase-callout {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 14px;
+  border: 1px solid rgba(27, 94, 89, 0.18);
+  border-radius: 8px;
+  background: rgba(27, 94, 89, 0.1);
+}
+
+.phase-callout span,
+.phase-marker span {
+  color: #63726d;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.phase-callout strong {
+  font-size: 18px;
+}
+
+.phase-callout p,
+.phase-row p,
+.phase-row small {
+  color: #56655f;
+  line-height: 1.55;
 }
 
 .signal-grid {
@@ -388,6 +421,55 @@ h3 {
   grid-column: span 2;
 }
 
+.fasting-phases-panel {
+  grid-column: span 2;
+}
+
+.phase-stack {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.phase-row {
+  display: grid;
+  grid-template-columns: 94px minmax(0, 1fr);
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid rgba(23, 32, 29, 0.1);
+  border-left-width: 5px;
+  border-radius: 8px;
+  background: #fffdf8;
+}
+
+.phase-row h3 {
+  margin-bottom: 6px;
+}
+
+.phase-row small {
+  display: block;
+  margin-top: 6px;
+}
+
+.phase-marker strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 18px;
+}
+
+.phase-completed {
+  border-left-color: #228452;
+}
+
+.phase-active {
+  border-left-color: #1b5e59;
+  background: rgba(27, 94, 89, 0.08);
+}
+
+.phase-upcoming {
+  border-left-color: #aab6ae;
+}
+
 .metric-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -446,7 +528,7 @@ h3 {
   }
 
   nav {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(136px, 1fr));
   }
 
   .hero-grid,
@@ -455,6 +537,10 @@ h3 {
   }
 
   .sync-panel {
+    grid-column: auto;
+  }
+
+  .fasting-phases-panel {
     grid-column: auto;
   }
 }
@@ -478,6 +564,10 @@ h3 {
   }
 
   .meal-row {
+    grid-template-columns: 1fr;
+  }
+
+  .phase-row {
     grid-template-columns: 1fr;
   }
 

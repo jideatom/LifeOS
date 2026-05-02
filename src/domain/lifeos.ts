@@ -77,6 +77,16 @@ export type FastingSession = {
   hydrationTargetLiters: number
 }
 
+export type FastingPhase = {
+  id: string
+  name: string
+  window: string
+  startsAtHour: number
+  status: 'Completed' | 'Active' | 'Upcoming'
+  essence: string
+  healthNote: string
+}
+
 export type WorkoutSession = {
   plan: WorkoutPlan
   status: 'Planned' | 'Done' | 'Optional' | 'Rest'
@@ -96,6 +106,7 @@ export type SyncMetric = {
 export type DailyCommandPlan = {
   log: DailyHealthLog
   fasting: FastingSession
+  fastingPhases: FastingPhase[]
   meals: MealPlanItem[]
   workout: WorkoutSession
   syncMetrics: SyncMetric[]
