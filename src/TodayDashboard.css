@@ -1,0 +1,165 @@
+h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.readiness-yellow {
+  border-color: rgba(186, 122, 35, 0.45);
+}
+
+.readiness-red {
+  border-color: rgba(192, 53, 43, 0.45);
+}
+
+.fast-ring {
+  --fast-progress: 0%;
+  background:
+    radial-gradient(circle at center, #fffdf8 0 58%, transparent 59%),
+    conic-gradient(#1b5e59 0 var(--fast-progress), #d8ded4 var(--fast-progress) 100%);
+}
+
+.fast-note,
+.workout-status {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+  padding: 10px;
+  border-radius: 8px;
+  background: #eef2eb;
+  color: #63726d;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.fast-note strong,
+.workout-status strong {
+  color: #17201d;
+  font-size: 16px;
+}
+
+.content-grid {
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.95fr) minmax(300px, 0.8fr);
+}
+
+.meals-panel {
+  grid-row: span 2;
+}
+
+.meal-stack,
+.metric-grid {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.meal-row {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid rgba(23, 32, 29, 0.1);
+  border-left-width: 5px;
+  border-radius: 8px;
+  background: #fffdf8;
+}
+
+.carb-low {
+  border-left-color: #228452;
+}
+
+.carb-medium {
+  border-left-color: #ba7a23;
+}
+
+.carb-relax {
+  border-left-color: #386f93;
+}
+
+.meal-time strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 18px;
+}
+
+.meal-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.meal-heading span {
+  flex: 0 0 auto;
+  align-self: start;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #eef2eb;
+}
+
+.meal-row p,
+.meal-row small {
+  color: #56655f;
+  line-height: 1.55;
+}
+
+.meal-row small {
+  display: block;
+  margin-top: 8px;
+}
+
+.workout-status {
+  display: grid;
+  justify-content: stretch;
+  margin-top: 18px;
+}
+
+.metric-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.metric-card {
+  min-height: 92px;
+  padding: 14px;
+  border: 1px solid rgba(23, 32, 29, 0.1);
+  border-left-width: 5px;
+  border-radius: 8px;
+  background: #fffdf8;
+}
+
+.metric-card strong {
+  display: block;
+  margin-top: 10px;
+  font-size: 28px;
+}
+
+.metric-card small {
+  margin-left: 4px;
+  color: #63726d;
+  font-size: 13px;
+}
+
+.metric-good {
+  border-left-color: #228452;
+}
+
+.metric-watch {
+  border-left-color: #ba7a23;
+}
+
+.metric-missing {
+  border-left-color: #386f93;
+}
+
+@media (max-width: 720px) {
+  .meal-row,
+  .metric-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .meal-heading,
+  .fast-note {
+    display: grid;
+  }
+}
