@@ -53,6 +53,55 @@ export type HealthConnectDailyImport = {
   weightKg?: number
 }
 
+export type MealStatus = 'Planned' | 'Done' | 'Skipped' | 'Flexible'
+
+export type MealPlanItem = {
+  id: string
+  time: string
+  title: string
+  role: 'Break fast' | 'Main meal' | 'Supper' | 'Snack' | 'Hydration'
+  status: MealStatus
+  carbSignal: 'Low' | 'Medium' | 'Relax'
+  items: string[]
+  budgetBackup?: string
+}
+
+export type FastingSession = {
+  protocol: DailyHealthLog['fastProtocol']
+  status: FastingStatus
+  startedAt: string
+  targetEndAt: string
+  eatingWindow: string
+  targetHours: number
+  elapsedHours: number
+  hydrationTargetLiters: number
+}
+
+export type WorkoutSession = {
+  plan: WorkoutPlan
+  status: 'Planned' | 'Done' | 'Optional' | 'Rest'
+  focus: string
+  lifts: string[]
+  accessories: string[]
+  conditioning?: string
+}
+
+export type SyncMetric = {
+  label: string
+  value: string
+  unit?: string
+  status: 'Good' | 'Watch' | 'Missing'
+}
+
+export type DailyCommandPlan = {
+  log: DailyHealthLog
+  fasting: FastingSession
+  meals: MealPlanItem[]
+  workout: WorkoutSession
+  syncMetrics: SyncMetric[]
+  priorities: string[]
+}
+
 export function computeReadiness(input: Pick<DailyHealthLog, 'sleepHours' | 'restingHeartRate'>) {
   if (input.sleepHours !== undefined && input.sleepHours < 5) return 'Red' satisfies Readiness
   if (input.sleepHours !== undefined && input.sleepHours < 6.5) return 'Yellow' satisfies Readiness
@@ -60,4 +109,8 @@ export function computeReadiness(input: Pick<DailyHealthLog, 'sleepHours' | 'res
     return 'Yellow' satisfies Readiness
   }
   return 'Green' satisfies Readiness
+}
+
+export function fastingProgress(session: Pick<FastingSession, 'elapsedHours' | 'targetHours'>) {
+  return Math.min(100, Math.round((session.elapsedHours / session.targetHours) * 100))
 }
