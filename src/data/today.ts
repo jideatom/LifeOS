@@ -1,102 +1,293 @@
-import type { DailyCommandPlan } from '../domain/lifeos'
+import type {
+  DailyCommandPlan,
+  DayType,
+  FastingSession,
+  MealPlanItem,
+  NutritionMode,
+  WorkoutPlan,
+  WorkoutSession,
+} from '../domain/lifeos'
 import { computeReadiness } from '../domain/lifeos'
 
-const importedSignals = {
-  sleepHours: 6.9,
-  sleepScore: 78,
-  restingHeartRate: 67,
-  steps: 6420,
-  activeZoneMinutes: 22,
-  caloriesBurned: 2180,
-  weightKg: 101.5,
+const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+
+function dateFromIso(dateIso: string) {
+  return new Date(`${dateIso}T12:00:00`)
 }
 
-export const todayPlan: DailyCommandPlan = {
-  log: {
-    id: '2026-05-02',
-    day: 'Saturday',
-    date: '2026-05-02',
-    dayType: 'Relax',
-    fastingStatus: 'Eating Window',
-    fastProtocol: 'No strict fast',
-    eatingWindow: '11:00-20:00',
-    nutritionMode: 'Yoruba relax',
-    workoutPlan: 'Conditioning',
-    readiness: computeReadiness(importedSignals),
-    ...importedSignals,
-  },
-  fasting: {
-    protocol: 'No strict fast',
-    status: 'Eating Window',
-    startedAt: '21:00',
-    targetEndAt: '11:00',
-    eatingWindow: '11:00-20:00',
-    targetHours: 14,
-    elapsedHours: 14,
-    hydrationTargetLiters: 3,
-  },
-  meals: [
+function isoFromDate(date: Date) {
+  return date.toISOString().slice(0, 10)
+}
+
+export function todayIso() {
+  return isoFromDate(new Date())
+}
+
+export function shiftDate(dateIso: string, days: number) {
+  const date = dateFromIso(dateIso)
+  date.setDate(date.getDate() + days)
+  return isoFromDate(date)
+}
+
+function dayName(dateIso: string) {
+  return DAY_NAMES[dateFromIso(dateIso).getDay()]
+}
+
+function isRelaxDay(dateIso: string) {
+  const day = dateFromIso(dateIso).getDay()
+  return day === 0 || day === 6
+}
+
+function formatHumanDate(dateIso: string) {
+  return new Intl.DateTimeFormat('en-NG', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  }).format(dateFromIso(dateIso))
+}
+
+function signalsForDate(dateIso: string) {
+  const dayOfMonth = dateFromIso(dateIso).getDate()
+  const relax = isRelaxDay(dateIso)
+
+  return {
+    sleepHours: relax ? 7.2 : 6.5 + ((dayOfMonth % 4) * 0.18),
+    sleepScore: relax ? 81 : 74 + (dayOfMonth % 8),
+    restingHeartRate: relax ? 66 : 68 + (dayOfMonth % 5),
+    steps: relax ? 6200 + dayOfMonth * 35 : 7800 + dayOfMonth * 42,
+    activeZoneMinutes: relax ? 18 + (dayOfMonth % 10) : 28 + (dayOfMonth % 16),
+    caloriesBurned: relax ? 2150 + dayOfMonth * 7 : 2380 + dayOfMonth * 9,
+    weightKg: 101.5,
+  }
+}
+
+function fastingForDate(dateIso: string): FastingSession {
+  if (isRelaxDay(dateIso)) {
+    return {
+      protocol: 'No strict fast',
+      status: 'Eating Window',
+      startedAt: '21:00',
+      targetEndAt: '11:00',
+      eatingWindow: '11:00-20:00',
+      targetHours: 14,
+      elapsedHours: 14,
+      hydrationTargetLiters: 3,
+    }
+  }
+
+  return {
+    protocol: '16:8',
+    status: 'Fasting',
+    startedAt: '20:00',
+    targetEndAt: '12:00',
+    eatingWindow: '12:00-20:00',
+    targetHours: 16,
+    elapsedHours: 11,
+    hydrationTargetLiters: 3.2,
+  }
+}
+
+function mealsForDate(dateIso: string): MealPlanItem[] {
+  if (isRelaxDay(dateIso)) {
+    return [
+      {
+        id: 'break-fast',
+        time: '11:00',
+        title: 'Eggs, avocado and sauteed greens',
+        role: 'Break fast',
+        status: 'Planned',
+        carbSignal: 'Low',
+        items: ['Eggs', 'Avocado', 'Ugu or spinach', 'Olive oil or small butter'],
+        budgetBackup: 'Eggs plus cabbage stir-fry if avocado price is high.',
+      },
+      {
+        id: 'main-meal',
+        time: '15:00',
+        title: 'Alaran with efo riro and cauliflower rice',
+        role: 'Main meal',
+        status: 'Planned',
+        carbSignal: 'Low',
+        items: ['Alaran/mackerel', 'Efo riro without crayfish', 'Cauliflower rice', 'Cucumber'],
+        budgetBackup: 'Swap fish for eggs, gizzard or turkey offcuts when fish price jumps.',
+      },
+      {
+        id: 'relax-snack',
+        time: '17:30',
+        title: 'Seasonal controlled snack',
+        role: 'Snack',
+        status: 'Flexible',
+        carbSignal: 'Relax',
+        items: ['Small mango portion', 'Local walnut', 'Water'],
+        budgetBackup: 'Use local walnut only if mango pushes cravings.',
+      },
+      {
+        id: 'supper',
+        time: '19:30',
+        title: 'Obe ata with croaker and cabbage rice',
+        role: 'Supper',
+        status: 'Planned',
+        carbSignal: 'Low',
+        items: ['Croaker', 'Obe ata', 'Cabbage rice', 'Side vegetables'],
+        budgetBackup: 'Use alaran, eggs or grilled chicken instead of croaker.',
+      },
+    ]
+  }
+
+  return [
     {
       id: 'break-fast',
-      time: '11:00',
-      title: 'Eggs, avocado and sauteed greens',
+      time: '12:00',
+      title: 'Protein-first fast breaker',
       role: 'Break fast',
       status: 'Planned',
       carbSignal: 'Low',
-      items: ['Eggs', 'Avocado', 'Ugu or spinach', 'Olive oil or small butter'],
-      budgetBackup: 'Eggs plus cabbage stir-fry if avocado price is high.',
+      items: ['Boiled eggs', 'Avocado or groundnut', 'Cucumber', 'Water'],
+      budgetBackup: 'Eggs plus groundnut when avocado is expensive.',
     },
     {
       id: 'main-meal',
-      time: '15:00',
-      title: 'Alaran with efo riro and cauliflower rice',
+      time: '15:30',
+      title: 'Yoruba soup bowl, no swallow default',
       role: 'Main meal',
       status: 'Planned',
       carbSignal: 'Low',
-      items: ['Alaran/mackerel', 'Efo riro without crayfish', 'Cauliflower rice', 'Cucumber'],
-      budgetBackup: 'Swap fish for eggs, gizzard or turkey offcuts when fish price jumps.',
-    },
-    {
-      id: 'relax-snack',
-      time: '17:30',
-      title: 'Seasonal controlled snack',
-      role: 'Snack',
-      status: 'Flexible',
-      carbSignal: 'Relax',
-      items: ['Small mango portion', 'Local walnut', 'Water'],
-      budgetBackup: 'Use local walnut only if mango pushes cravings.',
+      items: ['Ewedu or efo riro', 'Alaran or gizzard', 'Cabbage swallow', 'Pepper sauce'],
+      budgetBackup: 'Use eggs, chicken laps or gizzard when fish price is high.',
     },
     {
       id: 'supper',
-      time: '19:30',
-      title: 'Obe ata with croaker and cabbage rice',
+      time: '19:15',
+      title: 'Obe ata with low-carb rice swap',
       role: 'Supper',
       status: 'Planned',
       carbSignal: 'Low',
-      items: ['Croaker', 'Obe ata', 'Cabbage rice', 'Side vegetables'],
-      budgetBackup: 'Use alaran, eggs or grilled chicken instead of croaker.',
+      items: ['Obe ata', 'Cauliflower rice or cabbage rice', 'Eggs or mackerel', 'Vegetables'],
+      budgetBackup: 'Cabbage rice is the default backup if cauliflower is unavailable.',
     },
-  ],
-  workout: {
-    plan: 'Conditioning',
-    status: 'Optional',
-    focus: 'Relax-day movement without draining recovery',
-    lifts: ['Elliptical Zone 2 for 25-35 min', 'Skipping rope technique 6 x 45 sec'],
-    accessories: ['Hip mobility', 'Shoulder dislocates', 'Easy core carries'],
-    conditioning: 'Keep nasal-breathing pace. Save heavy squats for Monday.',
-  },
-  syncMetrics: [
-    { label: 'Sleep', value: '6.9', unit: 'h', status: 'Good' },
-    { label: 'Sleep score', value: '78', status: 'Good' },
-    { label: 'Resting HR', value: '67', unit: 'bpm', status: 'Good' },
-    { label: 'Steps', value: '6,420', status: 'Watch' },
-    { label: 'Zone mins', value: '22', status: 'Good' },
-    { label: 'Weight', value: '101.5', unit: 'kg', status: 'Watch' },
-  ],
-  priorities: [
-    'Keep Saturday relaxed, not chaotic.',
-    'Use cauliflower or cabbage rice before any real rice.',
-    'Hit hydration target before supper.',
-    'Prepare Monday StrongLifts weights tonight.',
-  ],
+  ]
 }
+
+function workoutForDate(dateIso: string): WorkoutSession {
+  const day = dateFromIso(dateIso).getDay()
+  const weekParity = Math.floor(dateFromIso(dateIso).getTime() / (7 * 24 * 60 * 60 * 1000)) % 2
+
+  if (day === 1 || day === 5) {
+    return {
+      plan: weekParity === 0 ? 'StrongLifts A' : 'StrongLifts B',
+      status: 'Planned',
+      focus: weekParity === 0 ? 'Squat, bench, row progression' : 'Squat, press, hinge progression',
+      lifts:
+        weekParity === 0
+          ? ['Back Squat 5x5', 'Bench Press 5x5', 'Barbell Row 5x5']
+          : ['Back Squat 5x5', 'Overhead Press 5x5', 'Deadlift 1x5 or Trap Bar 3x3-5'],
+      accessories:
+        weekParity === 0
+          ? ['Dips', 'Plank', 'Elliptical cooldown']
+          : ['Lat pulldown', 'Leg curl', 'Hip mobility'],
+    }
+  }
+
+  if (day === 3) {
+    return {
+      plan: weekParity === 0 ? 'StrongLifts B' : 'StrongLifts A',
+      status: 'Planned',
+      focus: weekParity === 0 ? 'Press and hinge day' : 'Bench and row day',
+      lifts:
+        weekParity === 0
+          ? ['Back Squat 5x5', 'Overhead Press 5x5', 'Trap Bar Deadlift 3x3-5']
+          : ['Back Squat 5x5', 'Bench Press 5x5', 'Barbell Row 5x5'],
+      accessories: ['Lat pulldown', 'Leg curl', 'Loaded carries'],
+    }
+  }
+
+  if (isRelaxDay(dateIso)) {
+    return {
+      plan: 'Conditioning',
+      status: 'Optional',
+      focus: 'Relax-day movement without draining recovery',
+      lifts: ['Elliptical Zone 2 for 25-35 min', 'Skipping rope technique 6 x 45 sec'],
+      accessories: ['Hip mobility', 'Shoulder dislocates', 'Easy core carries'],
+      conditioning: 'Keep nasal-breathing pace. Save heavy squats for the next lift day.',
+    }
+  }
+
+  return {
+    plan: 'Mobility/Recovery',
+    status: 'Optional',
+    focus: 'Recovery, steps and joints',
+    lifts: ['Walk or elliptical Zone 2 for 20-30 min'],
+    accessories: ['Shoulder mobility', 'Hip airplanes', 'Light core'],
+  }
+}
+
+function prioritiesForDate(dateIso: string) {
+  if (isRelaxDay(dateIso)) {
+    return [
+      'Keep the relax day controlled, not chaotic.',
+      'Use cauliflower or cabbage rice before any real rice.',
+      'Hit hydration target before supper.',
+      'Prepare the next StrongLifts session before bed.',
+    ]
+  }
+
+  return [
+    'Protect the fasting window.',
+    'Make supper Yoruba, low-carb and satisfying.',
+    'Choose budget protein backup before buying expensive fish.',
+    'Keep carbs deliberate, not accidental.',
+  ]
+}
+
+export function getPlanForDate(dateIso: string): DailyCommandPlan {
+  const importedSignals = signalsForDate(dateIso)
+  const relax = isRelaxDay(dateIso)
+  const workout = workoutForDate(dateIso)
+  const fasting = fastingForDate(dateIso)
+  const dayType: DayType = relax ? 'Relax' : 'Fasting/Healthy'
+  const nutritionMode: NutritionMode = relax ? 'Yoruba relax' : 'Yoruba low-carb'
+
+  return {
+    log: {
+      id: dateIso,
+      day: dayName(dateIso),
+      date: dateIso,
+      dayType,
+      fastingStatus: fasting.status,
+      fastProtocol: fasting.protocol,
+      eatingWindow: fasting.eatingWindow,
+      nutritionMode,
+      workoutPlan: workout.plan as WorkoutPlan,
+      readiness: computeReadiness(importedSignals),
+      ...importedSignals,
+    },
+    fasting,
+    meals: mealsForDate(dateIso),
+    workout,
+    syncMetrics: [
+      { label: 'Sleep', value: importedSignals.sleepHours.toFixed(1), unit: 'h', status: 'Good' },
+      { label: 'Sleep score', value: `${importedSignals.sleepScore}`, status: 'Good' },
+      { label: 'Resting HR', value: `${importedSignals.restingHeartRate}`, unit: 'bpm', status: 'Good' },
+      { label: 'Steps', value: importedSignals.steps.toLocaleString('en-NG'), status: relax ? 'Watch' : 'Good' },
+      { label: 'Zone mins', value: `${importedSignals.activeZoneMinutes}`, status: 'Good' },
+      { label: 'Weight', value: importedSignals.weightKg.toFixed(1), unit: 'kg', status: 'Watch' },
+    ],
+    priorities: prioritiesForDate(dateIso),
+  }
+}
+
+export function getWeekPreview(centerDateIso: string) {
+  return Array.from({ length: 7 }, (_, index) => {
+    const date = shiftDate(centerDateIso, index - 3)
+    const plan = getPlanForDate(date)
+
+    return {
+      date,
+      day: plan.log.day.slice(0, 3),
+      label: formatHumanDate(date),
+      type: plan.log.dayType,
+      workout: plan.workout.plan,
+    }
+  })
+}
+
+export const todayPlan = getPlanForDate(todayIso())
