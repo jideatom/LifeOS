@@ -494,9 +494,17 @@ h3 {
 }
 
 .fast-ring-center .prep-start-time {
+  display: block;
   color: #071b42;
-  font-size: 34px;
+  font-size: 28px;
+  font-weight: 900;
   line-height: 1;
+  text-align: center;
+}
+
+.fast-time-control input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.65;
 }
 
 .fast-meta {
@@ -521,6 +529,31 @@ h3 {
   white-space: pre-line;
   color: #17201d;
   font-size: 18px;
+}
+
+.fast-time-control {
+  display: grid;
+  gap: 4px;
+}
+
+.fast-time-control span {
+  color: #63726d;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.fast-time-control input {
+  width: 100%;
+  min-width: 0;
+  height: 32px;
+  border: 1px solid rgba(82, 103, 214, 0.16);
+  border-radius: 8px;
+  padding: 0 6px;
+  background: #fffdf8;
+  color: #17201d;
+  font-size: 16px;
+  font-weight: 900;
 }
 
 .fast-note {

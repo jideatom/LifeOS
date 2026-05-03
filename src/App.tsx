@@ -40,6 +40,7 @@ const NOTION_LIFEOS_URL =
 const ACTIVE_FAST_STORAGE_KEY = 'lifeos.activeFastStartIso'
 const FASTING_PLAN_STORAGE_KEY = 'lifeos.selectedFastingPlan'
 const CUSTOM_PLAN_STORAGE_KEY = 'lifeos.customFastingPlan'
+const PLANNED_FAST_START_TIME_STORAGE_KEY = 'lifeos.plannedFastStartTime'
 
 function readinessLabel(readiness: string) {
   if (readiness === 'Green') return 'Train as planned'
@@ -77,6 +78,16 @@ function formatClockTime(date: Date) {
   }).format(date)
 }
 
+function formatTimeInput(date: Date) {
+  const hours = `${date.getHours()}`.padStart(2, '0')
+  const minutes = `${date.getMinutes()}`.padStart(2, '0')
+  return `${hours}:${minutes}`
+}
+
+function isTimeInput(value: string) {
+  return /^([01]\d|2[0-3]):[0-5]\d$/.test(value)
+}
+
 function dateAtClockTime(dateIso: string, time: string) {
   const [hours, minutes] = time.split(':').map(Number)
   const date = new Date(`${dateIso}T12:00:00`)
@@ -93,6 +104,21 @@ function isoFromLocalDate(date: Date) {
   const month = `${date.getMonth() + 1}`.padStart(2, '0')
   const day = `${date.getDate()}`.padStart(2, '0')
   return `${year}-${month}-${day}`
+}
+
+function formatRelativeDay(date: Date, referenceDate: Date) {
+  const dateIso = isoFromLocalDate(date)
+  const referenceIso = isoFromLocalDate(referenceDate)
+  const tomorrow = new Date(referenceDate)
+  tomorrow.setDate(referenceDate.getDate() + 1)
+
+  if (dateIso === referenceIso) return 'Today'
+  if (dateIso === isoFromLocalDate(tomorrow)) return 'Tomorrow'
+
+  return new Intl.DateTimeFormat('en-NG', {
+    month: 'short',
+    day: 'numeric',
+  }).format(date)
 }
 
 function formatRelativeDayTime(date: Date, referenceDate: Date) {
@@ -113,6 +139,11 @@ function formatRelativeDayTime(date: Date, referenceDate: Date) {
 
 function activeFastInitialValue() {
   return window.localStorage.getItem(ACTIVE_FAST_STORAGE_KEY)
+}
+
+function plannedFastStartInitialValue() {
+  const storedTime = window.localStorage.getItem(PLANNED_FAST_START_TIME_STORAGE_KEY)
+  return storedTime && isTimeInput(storedTime) ? storedTime : '20:00'
 }
 
 function clampNumber(value: number, min: number, max: number) {
@@ -163,6 +194,7 @@ function App() {
   const [selectedFastingPlan, setSelectedFastingPlan] = useState(storedFastingPlanInitialValue)
   const [isPlanPickerOpen, setIsPlanPickerOpen] = useState(false)
   const [activeFastStartIso, setActiveFastStartIso] = useState<string | null>(activeFastInitialValue)
+  const [plannedFastStartTime, setPlannedFastStartTime] = useState(plannedFastStartInitialValue)
   const storedCustomPlan = useMemo(() => storedCustomPlanInitialValue(), [])
   const [customFastingHours, setCustomFastingHours] = useState(storedCustomPlan.fastingHours)
   const [customEatingHours, setCustomEatingHours] = useState(storedCustomPlan.eatingHours)
@@ -183,8 +215,8 @@ function App() {
     [selectedDate, clock, selectedFastingPlan],
   )
   const plannedFastStart = useMemo(
-    () => dateAtClockTime(selectedDate, todayPlan.fasting.startedAt),
-    [selectedDate, todayPlan.fasting.startedAt],
+    () => dateAtClockTime(selectedDate, plannedFastStartTime),
+    [plannedFastStartTime, selectedDate],
   )
   const plannedFastEnd = useMemo(
     () => addHours(plannedFastStart, selectedFastingPlan.fastingHours),
@@ -282,6 +314,10 @@ function App() {
   }, [selectedFastingPlan])
 
   useEffect(() => {
+    window.localStorage.setItem(PLANNED_FAST_START_TIME_STORAGE_KEY, plannedFastStartTime)
+  }, [plannedFastStartTime])
+
+  useEffect(() => {
     window.localStorage.setItem(
       CUSTOM_PLAN_STORAGE_KEY,
       JSON.stringify({ fastingHours: customFastingHours, eatingHours: customEatingHours }),
@@ -296,9 +332,27 @@ function App() {
     }
 
     const now = new Date()
+    const start = dateAtClockTime(todayIso(), plannedFastStartTime)
     setSelectedDate(todayIso())
     setClock(now)
-    setActiveFastStartIso(now.toISOString())
+    setActiveFastStartIso(start.toISOString())
+  }
+
+  function handlePlannedStartTimeChange(value: string) {
+    if (isTimeInput(value)) setPlannedFastStartTime(value)
+  }
+
+  function handlePlannedEndTimeChange(value: string) {
+    if (!isTimeInput(value)) return
+
+    let intendedEnd = dateAtClockTime(selectedDate, value)
+    if (intendedEnd.getTime() <= plannedFastStart.getTime()) {
+      intendedEnd = new Date(intendedEnd.getTime())
+      intendedEnd.setDate(intendedEnd.getDate() + 1)
+    }
+
+    const adjustedStart = addHours(intendedEnd, -selectedFastingPlan.fastingHours)
+    setPlannedFastStartTime(formatTimeInput(adjustedStart))
   }
 
   const commandSignals = [
@@ -523,11 +577,35 @@ function App() {
             </div>
             <div className="fast-meta">
               <p>
-                <strong>{isLiveFastActive ? fasting.startedAt : formatRelativeDayTime(plannedFastStart, clock)}</strong>
+                {isLiveFastActive ? (
+                  <strong>{fasting.startedAt}</strong>
+                ) : (
+                  <label className="fast-time-control">
+                    <span>{formatRelativeDay(plannedFastStart, clock)}</span>
+                    <input
+                      type="time"
+                      value={plannedFastStartTime}
+                      aria-label="Intended fast start time"
+                      onChange={(event) => handlePlannedStartTimeChange(event.target.value)}
+                    />
+                  </label>
+                )}
                 Start time
               </p>
               <p>
-                <strong>{isLiveFastActive ? fasting.targetEndAt : formatRelativeDayTime(plannedFastEnd, clock)}</strong>
+                {isLiveFastActive ? (
+                  <strong>{fasting.targetEndAt}</strong>
+                ) : (
+                  <label className="fast-time-control">
+                    <span>{formatRelativeDay(plannedFastEnd, clock)}</span>
+                    <input
+                      type="time"
+                      value={formatTimeInput(plannedFastEnd)}
+                      aria-label="Intended fast end time"
+                      onChange={(event) => handlePlannedEndTimeChange(event.target.value)}
+                    />
+                  </label>
+                )}
                 End time
               </p>
               <p>
