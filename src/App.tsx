@@ -428,6 +428,29 @@ function App() {
         </nav>
       </aside>
 
+      <nav className="mobile-tabbar" aria-label="LifeOS mobile navigation">
+        <a href="#fasting" className="active">
+          <TimerReset size={21} aria-hidden="true" />
+          Fasting
+        </a>
+        <a href="#meals">
+          <Utensils size={21} aria-hidden="true" />
+          Meals
+        </a>
+        <a href="#fitness">
+          <Dumbbell size={21} aria-hidden="true" />
+          Training
+        </a>
+        <a href="#sync">
+          <Smartphone size={21} aria-hidden="true" />
+          Sync
+        </a>
+        <a href="#me">
+          <HeartPulse size={21} aria-hidden="true" />
+          Me
+        </a>
+      </nav>
+
       <section className="workspace">
         <header className="topbar">
           <div>
@@ -767,7 +790,7 @@ function App() {
             </div>
           </article>
 
-          <article className="panel compact-panel">
+          <article id="me" className="panel compact-panel">
             <div className="panel-title">
               <Moon size={20} aria-hidden="true" />
               <h2>Priorities</h2>

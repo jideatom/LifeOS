@@ -88,6 +88,10 @@ nav a:hover {
   padding: 30px;
 }
 
+.mobile-tabbar {
+  display: none;
+}
+
 .topbar {
   display: flex;
   justify-content: space-between;
@@ -1175,28 +1179,132 @@ h3 {
 }
 
 @media (max-width: 720px) {
-  .workspace,
-  .sidebar {
-    padding: 18px;
+  html {
+    scroll-padding-bottom: 96px;
   }
 
-  .topbar,
-  .hero-grid {
+  .app-shell {
+    display: block;
+  }
+
+  .sidebar {
+    display: none;
+  }
+
+  .mobile-tabbar {
+    position: fixed;
+    right: 10px;
+    bottom: 10px;
+    left: 10px;
+    z-index: 30;
+    min-height: 68px;
     display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 2px;
+    padding: 8px;
+    border: 1px solid rgba(23, 32, 29, 0.12);
+    border-radius: 22px;
+    background: rgba(255, 253, 248, 0.94);
+    box-shadow: 0 18px 42px rgba(23, 32, 29, 0.18);
+    backdrop-filter: blur(18px);
+  }
+
+  .mobile-tabbar a {
+    min-width: 0;
+    min-height: 50px;
+    display: grid;
+    place-items: center;
+    gap: 3px;
+    padding: 5px 2px;
+    border-radius: 16px;
+    color: #6a7772;
+    font-size: 11px;
+    font-weight: 900;
+    line-height: 1;
+    text-align: center;
+    text-decoration: none;
+  }
+
+  .mobile-tabbar a.active,
+  .mobile-tabbar a:hover {
+    color: #1b5e59;
+    background: rgba(16, 199, 106, 0.12);
+  }
+
+  .mobile-tabbar svg {
+    width: 21px;
+    height: 21px;
+  }
+
+  .workspace {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px 12px 96px;
+  }
+
+  .topbar {
+    order: 0;
+    display: grid;
+    gap: 10px;
+    margin-bottom: 0;
+  }
+
+  .topbar h1 {
+    font-size: 28px;
+    line-height: 1.03;
+  }
+
+  .readiness {
+    min-width: 0;
+  }
+
+  .hero-grid {
+    order: 1;
+    display: grid;
+    gap: 12px;
+    margin-bottom: 0;
+  }
+
+  .date-console {
+    order: 2;
+  }
+
+  .week-strip {
+    display: none;
+  }
+
+  .content-grid {
+    order: 3;
+    gap: 12px;
   }
 
   nav,
   .signal-grid,
-  .fast-meta,
   .nutrition-rule-grid,
   .metric-grid {
     grid-template-columns: 1fr;
   }
 
-  .meal-row {
-    grid-template-columns: 1fr;
+  .fast-card,
+  .panel,
+  .signal-card {
+    box-shadow: 0 12px 28px rgba(27, 36, 32, 0.07);
   }
 
+  .fast-card {
+    padding: 16px;
+  }
+
+  .fast-prep-heading {
+    margin-top: 16px;
+  }
+
+  .fast-prep-heading strong {
+    font-size: 26px;
+  }
+
+  .meal-row,
   .phase-row {
     grid-template-columns: 1fr;
   }
@@ -1208,14 +1316,67 @@ h3 {
 
   .fast-ring {
     width: min(210px, 70vw);
+    margin: 18px auto;
+  }
+
+  .fast-card-ready .fast-ring {
+    width: min(230px, 74vw);
+  }
+
+  .fast-meta {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .fast-meta p:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .fast-time-control input {
+    height: 44px;
+    padding: 0 10px;
+    font-size: 17px;
+  }
+
+  .fast-primary-action {
+    min-height: 58px;
+    font-size: 19px;
   }
 
   .fast-week {
     gap: 4px;
   }
 
+  .fast-week i {
+    width: 20px;
+    height: 20px;
+  }
+
+  .signal-card {
+    min-height: 118px;
+  }
+
+  .plan-picker-backdrop {
+    align-items: end;
+    justify-items: stretch;
+  }
+
   .plan-picker {
     width: 100vw;
+    height: min(88vh, 760px);
+    align-self: end;
+    padding: 18px 16px 96px;
+    border-radius: 22px 22px 0 0;
+    box-shadow: 0 -20px 60px rgba(23, 32, 29, 0.18);
+  }
+
+  .plan-picker-header {
+    position: sticky;
+    top: -18px;
+    z-index: 2;
+    margin: -18px -16px 16px;
+    padding: 18px 16px 12px;
+    background: rgba(255, 253, 248, 0.96);
+    backdrop-filter: blur(12px);
   }
 
   .tailored-plan,
@@ -1225,5 +1386,9 @@ h3 {
 
   .plan-grid {
     grid-template-columns: 1fr;
+  }
+
+  .plan-card {
+    min-height: 116px;
   }
 }
