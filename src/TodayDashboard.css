@@ -83,13 +83,6 @@ h3 {
   text-transform: uppercase;
 }
 
-.fast-ring {
-  --fast-progress: 0%;
-  background:
-    radial-gradient(circle at center, #fffdf8 0 58%, transparent 59%),
-    conic-gradient(#1b5e59 0 var(--fast-progress), #d8ded4 var(--fast-progress) 100%);
-}
-
 .fast-note,
 .workout-status {
   display: flex;

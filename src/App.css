@@ -169,6 +169,12 @@ h3 {
   padding: 22px;
 }
 
+.fast-card-ready {
+  background:
+    linear-gradient(180deg, rgba(241, 249, 252, 0.96), rgba(255, 253, 248, 0.94)),
+    #fffdf8;
+}
+
 .fast-card-top {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto;
@@ -251,6 +257,27 @@ h3 {
   box-shadow: inset 0 -7px 0 #1b5e59;
 }
 
+.fast-prep-heading {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  margin-top: 20px;
+  color: #0b2a5b;
+  text-align: center;
+}
+
+.fast-prep-heading span {
+  color: #63726d;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.fast-prep-heading strong {
+  font-size: 28px;
+  line-height: 1.1;
+}
+
 .fast-ring {
   --fast-progress: 0%;
   --phase-map-progress: 0%;
@@ -269,6 +296,22 @@ h3 {
   box-shadow:
     inset 0 0 0 15px rgba(16, 199, 106, 0.12),
     0 22px 44px rgba(16, 199, 106, 0.1);
+}
+
+.fast-card-ready .fast-ring {
+  width: 240px;
+  margin-top: 18px;
+  background:
+    radial-gradient(circle at center, #fffdf8 0 58%, transparent 59%),
+    conic-gradient(from 216deg, transparent 0 28deg, #cddafc 28deg 332deg, transparent 332deg 360deg);
+  box-shadow:
+    inset 0 0 0 15px rgba(205, 218, 252, 0.28),
+    0 22px 44px rgba(82, 103, 214, 0.1);
+}
+
+.fast-card-ready .phase-pointer,
+.fast-card-ready .phase-tick {
+  display: none;
 }
 
 .phase-pointer {
@@ -297,6 +340,12 @@ h3 {
   box-shadow: 0 12px 28px rgba(186, 122, 35, 0.22);
 }
 
+.fast-card-ready .fast-plan-target {
+  background: #f4f7ff;
+  color: #0b2a5b;
+  box-shadow: 0 12px 28px rgba(82, 103, 214, 0.16);
+}
+
 .fast-plan-target strong {
   font-size: 19px;
   line-height: 1;
@@ -306,6 +355,10 @@ h3 {
   color: #6f1749;
   font-size: 11px;
   font-weight: 900;
+}
+
+.fast-card-ready .fast-plan-target span {
+  color: #0b2a5b;
 }
 
 .phase-pointer svg {
@@ -386,6 +439,12 @@ h3 {
   text-align: center;
 }
 
+.fast-card-ready .fast-ring-center {
+  width: 172px;
+  gap: 9px;
+  color: #0b2a5b;
+}
+
 .ring-progress-label {
   color: #1b5e59;
   font-size: 15px;
@@ -407,6 +466,37 @@ h3 {
   font-size: 11px;
   font-weight: 800;
   text-transform: uppercase;
+}
+
+.fast-card-ready .fast-ring-center small {
+  color: #52606a;
+  font-size: 13px;
+  text-transform: none;
+}
+
+.fast-protocol-chip {
+  min-height: 36px;
+  border: 0;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 12px 0 16px;
+  background: #edf3ff;
+  color: #0b2a5b;
+  cursor: pointer;
+  font-weight: 900;
+  box-shadow: inset 0 0 0 1px rgba(82, 103, 214, 0.12);
+}
+
+.fast-protocol-chip svg {
+  color: #5267d6;
+}
+
+.fast-ring-center .prep-start-time {
+  color: #071b42;
+  font-size: 34px;
+  line-height: 1;
 }
 
 .fast-meta {
@@ -459,6 +549,11 @@ h3 {
   filter: brightness(0.97);
 }
 
+.fast-card-ready .fast-primary-action {
+  background: #5267d6;
+  box-shadow: 0 18px 36px rgba(82, 103, 214, 0.22);
+}
+
 .action-fasting {
   background: #6f1749;
   box-shadow: 0 18px 36px rgba(111, 23, 73, 0.18);
@@ -477,6 +572,11 @@ h3 {
   border: 1px solid rgba(27, 94, 89, 0.18);
   border-radius: 8px;
   background: rgba(27, 94, 89, 0.1);
+}
+
+.fast-card-ready .phase-callout {
+  border-color: rgba(82, 103, 214, 0.18);
+  background: rgba(237, 243, 255, 0.9);
 }
 
 .phase-callout span,

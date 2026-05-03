@@ -77,6 +77,40 @@ function formatClockTime(date: Date) {
   }).format(date)
 }
 
+function dateAtClockTime(dateIso: string, time: string) {
+  const [hours, minutes] = time.split(':').map(Number)
+  const date = new Date(`${dateIso}T12:00:00`)
+  date.setHours(hours, minutes, 0, 0)
+  return date
+}
+
+function addHours(date: Date, hours: number) {
+  return new Date(date.getTime() + hours * 60 * 60 * 1000)
+}
+
+function isoFromLocalDate(date: Date) {
+  const year = date.getFullYear()
+  const month = `${date.getMonth() + 1}`.padStart(2, '0')
+  const day = `${date.getDate()}`.padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+function formatRelativeDayTime(date: Date, referenceDate: Date) {
+  const dateIso = isoFromLocalDate(date)
+  const referenceIso = isoFromLocalDate(referenceDate)
+  const tomorrow = new Date(referenceDate)
+  tomorrow.setDate(referenceDate.getDate() + 1)
+  const tomorrowIso = isoFromLocalDate(tomorrow)
+
+  if (dateIso === referenceIso) return `Today, ${formatClockTime(date)}`
+  if (dateIso === tomorrowIso) return `Tomorrow, ${formatClockTime(date)}`
+
+  return `${new Intl.DateTimeFormat('en-NG', {
+    month: 'short',
+    day: 'numeric',
+  }).format(date)}, ${formatClockTime(date)}`
+}
+
 function activeFastInitialValue() {
   return window.localStorage.getItem(ACTIVE_FAST_STORAGE_KEY)
 }
@@ -148,6 +182,22 @@ function App() {
     () => getPlanForDate(selectedDate, clock, selectedFastingPlan),
     [selectedDate, clock, selectedFastingPlan],
   )
+  const plannedFastStart = useMemo(
+    () => dateAtClockTime(selectedDate, todayPlan.fasting.startedAt),
+    [selectedDate, todayPlan.fasting.startedAt],
+  )
+  const plannedFastEnd = useMemo(
+    () => addHours(plannedFastStart, selectedFastingPlan.fastingHours),
+    [plannedFastStart, selectedFastingPlan.fastingHours],
+  )
+  const plannedEatingEnd = useMemo(
+    () => addHours(plannedFastEnd, selectedFastingPlan.eatingHours),
+    [plannedFastEnd, selectedFastingPlan.eatingHours],
+  )
+  const plannedEatingWindow =
+    selectedFastingPlan.eatingHours > 0
+      ? `${formatClockTime(plannedFastEnd)}-${formatClockTime(plannedEatingEnd)}`
+      : 'No eating'
   const weekPreview = useMemo(() => getWeekPreview(selectedDate), [selectedDate])
   const { log, meals, workout, syncMetrics, priorities } = todayPlan
   const isTodaySelected = selectedDate === todayIso()
@@ -157,6 +207,8 @@ function App() {
       return {
         ...todayPlan.fasting,
         status: 'Eating Window',
+        targetEndAt: formatClockTime(plannedFastEnd),
+        eatingWindow: plannedEatingWindow,
         elapsedHours: 0,
       }
     }
@@ -179,7 +231,7 @@ function App() {
       targetHours: selectedFastingPlan.fastingHours,
       elapsedHours,
     }
-  }, [activeFastStartIso, clock, isTodaySelected, selectedFastingPlan, todayPlan.fasting])
+  }, [activeFastStartIso, clock, isTodaySelected, plannedEatingWindow, plannedFastEnd, selectedFastingPlan, todayPlan.fasting])
   const fastingPhases = useMemo(() => getFastingPhasesForElapsed(fasting.elapsedHours), [fasting.elapsedHours])
   const progress = isLiveFastActive ? fastingProgress(fasting) : 0
   const activeFastingPhase = fastingPhases.find((phase) => phase.status === 'Active') ?? fastingPhases[0]
@@ -369,7 +421,7 @@ function App() {
         </section>
 
         <section id="today" className="hero-grid">
-          <article id="fasting" className="fast-card">
+          <article id="fasting" className={`fast-card ${isLiveFastActive ? 'fast-card-live' : 'fast-card-ready'}`}>
             <div className="fast-card-top">
               <div className="card-header">
                 <TimerReset size={22} aria-hidden="true" />
@@ -402,6 +454,13 @@ function App() {
                 </button>
               ))}
             </div>
+
+            {!isLiveFastActive ? (
+              <div className="fast-prep-heading">
+                <span>Eating window</span>
+                <strong>Get ready to fast</strong>
+              </div>
+            ) : null}
 
             <div
               className="fast-ring"
@@ -438,20 +497,38 @@ function App() {
                 </a>
               ))}
               <div className="fast-ring-center">
-                <strong className="ring-progress-label">{progress}%</strong>
-                <Flame size={42} aria-hidden="true" />
-                <span>{isLiveFastActive ? formatFastHours(fasting.elapsedHours) : 'Eating Window'}</span>
-                <small>{isLiveFastActive ? activeFastingPhase.name : 'Ready to start'}</small>
+                {isLiveFastActive ? (
+                  <>
+                    <strong className="ring-progress-label">{progress}%</strong>
+                    <Flame size={42} aria-hidden="true" />
+                    <span>{formatFastHours(fasting.elapsedHours)}</span>
+                    <small>{activeFastingPhase.name}</small>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      className="fast-protocol-chip"
+                      type="button"
+                      onClick={() => setIsPlanPickerOpen(true)}
+                      aria-label="Choose fasting plan"
+                    >
+                      {selectedFastingPlan.title}
+                      <ChevronRight size={16} aria-hidden="true" />
+                    </button>
+                    <small>Supposed to start at</small>
+                    <span className="prep-start-time">{formatClockTime(plannedFastStart)}</span>
+                  </>
+                )}
               </div>
             </div>
             <div className="fast-meta">
               <p>
-                <strong>{fasting.startedAt}</strong>
-                Start
+                <strong>{isLiveFastActive ? fasting.startedAt : formatRelativeDayTime(plannedFastStart, clock)}</strong>
+                Start time
               </p>
               <p>
-                <strong>{fasting.targetEndAt}</strong>
-                End
+                <strong>{isLiveFastActive ? fasting.targetEndAt : formatRelativeDayTime(plannedFastEnd, clock)}</strong>
+                End time
               </p>
               <p>
                 <strong>{formatEatingWindow(fasting.eatingWindow)}</strong>
@@ -470,15 +547,15 @@ function App() {
               type="button"
               onClick={handleFastAction}
             >
-              {isLiveFastActive ? fastActionLabel(fasting.status) : 'Start Fast'}
+              {isLiveFastActive ? fastActionLabel(fasting.status) : 'Start Fasting'}
             </button>
             <div className="phase-callout">
-              <span>{isLiveFastActive ? 'Current phase' : 'Current status'}</span>
-              <strong>{isLiveFastActive ? activeFastingPhase.name : 'Eating Window'}</strong>
+              <span>{isLiveFastActive ? 'Current phase' : 'Next fast'}</span>
+              <strong>{isLiveFastActive ? activeFastingPhase.name : `Ready for ${selectedFastingPlan.title}`}</strong>
               <p>
                 {isLiveFastActive
                   ? activeFastingPhase.essence
-                  : 'No fast is running. Choose a plan or press Start Fast when you are ready.'}
+                  : `Planned start is ${formatRelativeDayTime(plannedFastStart, clock)}. Expected end is ${formatRelativeDayTime(plannedFastEnd, clock)}.`}
               </p>
             </div>
           </article>
