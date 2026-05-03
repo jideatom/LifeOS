@@ -481,24 +481,28 @@ function App() {
 
   const commandSignals = [
     {
+      role: 'day',
       label: 'Day type',
       value: log.dayType,
       detail: `${log.day}, ${log.date}`,
       trend: log.dayType === 'Relax' ? 'watch' : 'good',
     },
     {
+      role: 'nutrition',
       label: 'Nutrition',
       value: log.nutritionMode,
       detail: `${meals.length} planned eating decisions`,
       trend: 'good',
     },
     {
+      role: 'training',
       label: 'Workout',
       value: workout.plan,
       detail: workout.focus,
       trend: workout.status === 'Optional' ? 'neutral' : 'good',
     },
     {
+      role: 'sync',
       label: 'Sync',
       value: 'Health Connect',
       detail: `${syncMetrics.length} Fitbit signals staged`,
@@ -798,7 +802,7 @@ function App() {
 
           <div className="signal-grid">
             {commandSignals.map((signal) => (
-              <article className={`signal-card signal-${signal.trend}`} key={signal.label}>
+              <article className={`signal-card signal-${signal.trend} signal-role-${signal.role}`} key={signal.label}>
                 <span>{signal.label}</span>
                 <strong>{signal.value}</strong>
                 <p>{signal.detail}</p>
@@ -949,7 +953,7 @@ function App() {
             </div>
           </article>
 
-          <article id="me" className="panel compact-panel">
+          <article id="me" className="panel compact-panel priorities-panel">
             <div className="panel-title">
               <Moon size={20} aria-hidden="true" />
               <h2>Priorities</h2>
@@ -964,7 +968,7 @@ function App() {
             </ul>
           </article>
 
-          <article className="panel compact-panel">
+          <article className="panel compact-panel notion-panel">
             <div className="panel-title">
               <CalendarDays size={20} aria-hidden="true" />
               <h2>Notion Backbone</h2>

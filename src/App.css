@@ -125,7 +125,7 @@ h3 {
   padding: 12px 14px;
   border: 1px solid rgba(23, 32, 29, 0.12);
   border-radius: 8px;
-  background: #fffdf8;
+  background: linear-gradient(135deg, rgba(255, 253, 248, 0.98), rgba(241, 248, 245, 0.95));
 }
 
 .readiness span {
@@ -143,14 +143,17 @@ h3 {
 
 .readiness-green {
   border-color: rgba(34, 132, 82, 0.34);
+  background: linear-gradient(135deg, rgba(235, 247, 239, 0.96), rgba(255, 253, 248, 0.96));
 }
 
 .readiness-yellow {
   border-color: rgba(186, 122, 35, 0.45);
+  background: linear-gradient(135deg, rgba(255, 247, 229, 0.96), rgba(255, 253, 248, 0.96));
 }
 
 .readiness-red {
   border-color: rgba(192, 53, 43, 0.45);
+  background: linear-gradient(135deg, rgba(255, 241, 238, 0.96), rgba(255, 253, 248, 0.96));
 }
 
 .hero-grid {
@@ -171,11 +174,18 @@ h3 {
 
 .fast-card {
   padding: 22px;
+  border-left: 5px solid #1b5e59;
 }
 
 .fast-card-ready {
   background:
     linear-gradient(180deg, rgba(241, 249, 252, 0.96), rgba(255, 253, 248, 0.94)),
+    #fffdf8;
+}
+
+.fast-card-live {
+  background:
+    linear-gradient(180deg, rgba(226, 247, 236, 0.96), rgba(255, 253, 248, 0.94)),
     #fffdf8;
 }
 
@@ -882,6 +892,38 @@ h3 {
   border-left-color: #386f93;
 }
 
+.metric-good {
+  background: rgba(235, 247, 239, 0.9);
+}
+
+.metric-watch {
+  background: rgba(255, 247, 229, 0.9);
+}
+
+.metric-missing {
+  background: rgba(237, 247, 252, 0.92);
+}
+
+.signal-role-day {
+  border-left-color: #ba7a23;
+  background: linear-gradient(135deg, rgba(255, 247, 229, 0.94), rgba(255, 253, 248, 0.96));
+}
+
+.signal-role-nutrition {
+  border-left-color: #228452;
+  background: linear-gradient(135deg, rgba(235, 247, 239, 0.96), rgba(255, 253, 248, 0.96));
+}
+
+.signal-role-training {
+  border-left-color: #386f93;
+  background: linear-gradient(135deg, rgba(237, 247, 252, 0.96), rgba(255, 253, 248, 0.96));
+}
+
+.signal-role-sync {
+  border-left-color: #ba7a23;
+  background: linear-gradient(135deg, rgba(255, 247, 229, 0.95), rgba(255, 253, 248, 0.96));
+}
+
 .content-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.95fr) minmax(300px, 0.8fr);
@@ -894,6 +936,21 @@ h3 {
 
 .meals-panel {
   grid-row: span 2;
+  border-left: 5px solid #228452;
+  background:
+    linear-gradient(135deg, rgba(235, 247, 239, 0.9), rgba(255, 253, 248, 0.96)),
+    #fffdf8;
+}
+
+.workout-panel {
+  border-left: 5px solid #386f93;
+  background:
+    linear-gradient(135deg, rgba(237, 247, 252, 0.94), rgba(255, 253, 248, 0.96)),
+    #fffdf8;
+}
+
+.workout-panel .panel-title {
+  color: #254f69;
 }
 
 .meal-stack,
@@ -993,12 +1050,21 @@ h3 {
 
 .sync-panel {
   grid-column: span 2;
+  border-left: 5px solid #ba7a23;
+  background:
+    linear-gradient(135deg, rgba(255, 247, 229, 0.94), rgba(255, 253, 248, 0.96)),
+    #fffdf8;
+}
+
+.sync-panel .panel-title {
+  color: #7a4d11;
 }
 
 .nutrition-command-panel {
   grid-column: span 2;
+  border-left: 5px solid #228452;
   background:
-    linear-gradient(135deg, rgba(255, 253, 248, 0.94), rgba(235, 246, 239, 0.94)),
+    linear-gradient(135deg, rgba(235, 247, 239, 0.96), rgba(255, 253, 248, 0.96)),
     #fffdf8;
 }
 
@@ -1045,8 +1111,9 @@ h3 {
 
 .recipes-panel {
   grid-column: span 2;
+  border-left: 5px solid #1b5e59;
   background:
-    linear-gradient(135deg, rgba(255, 253, 248, 0.96), rgba(238, 248, 244, 0.94)),
+    linear-gradient(135deg, rgba(238, 248, 244, 0.96), rgba(255, 253, 248, 0.96)),
     #fffdf8;
 }
 
@@ -1146,6 +1213,7 @@ h3 {
 .fasting-phases-panel {
   grid-column: span 2;
   border-color: rgba(27, 94, 89, 0.18);
+  border-left: 5px solid #1b5e59;
   background:
     linear-gradient(135deg, rgba(224, 246, 232, 0.92), rgba(255, 247, 229, 0.92)),
     #f3fbf5;
@@ -1252,6 +1320,24 @@ h3 {
 
 .compact-panel {
   min-height: 180px;
+}
+
+.priorities-panel {
+  border-left: 5px solid #1b5e59;
+  background:
+    linear-gradient(135deg, rgba(238, 248, 244, 0.96), rgba(255, 253, 248, 0.96)),
+    #fffdf8;
+}
+
+.notion-panel {
+  border-left: 5px solid #5267d6;
+  background:
+    linear-gradient(135deg, rgba(244, 247, 255, 0.96), rgba(255, 253, 248, 0.96)),
+    #fffdf8;
+}
+
+.notion-panel .panel-title {
+  color: #3446a4;
 }
 
 .plan-picker-backdrop {
