@@ -1,5 +1,6 @@
 import {
   Apple,
+  BookOpen,
   CalendarDays,
   CheckCircle2,
   ChevronRight,
@@ -204,6 +205,89 @@ function planTone(level: FastingPlan['level']) {
   if (level === 'Hot') return 'blue'
   return 'mint'
 }
+
+const recipeLibrary = [
+  {
+    title: 'Efo riro protein bowl',
+    tag: 'Soup',
+    carbSignal: 'Low',
+    base: 'Efo riro with spinach/ugu, pepper mix, palm oil in a controlled portion.',
+    protein: 'Best with eggs, gizzard, chicken laps, or alaran when budget allows.',
+    vehicle: 'Cabbage swallow, eggplant swallow, or cauliflower rice.',
+  },
+  {
+    title: 'Okro soup fast breaker',
+    tag: 'Soup',
+    carbSignal: 'Low',
+    base: 'Okro cooked light with pepper, greens, and enough protein to make it filling.',
+    protein: 'Use boiled eggs, chicken, gizzard, or mackerel. Skip crayfish and prawns.',
+    vehicle: 'Cabbage swallow or a small side of sauteed cabbage.',
+  },
+  {
+    title: 'Egusi light supper',
+    tag: 'Soup',
+    carbSignal: 'Low',
+    base: 'Egusi with more greens than seed paste, cooked rich but not heavy.',
+    protein: 'Eggs and chicken keep cost down. Croaker only when price makes sense.',
+    vehicle: 'Cauliflower rice or eggplant swallow.',
+  },
+  {
+    title: 'Pepper stew cauliflower rice',
+    tag: 'Stew',
+    carbSignal: 'Low',
+    base: 'Tomato and pepper stew over cauliflower rice with sauteed vegetables.',
+    protein: 'Eggs, gizzard, chicken laps, or alaran.',
+    vehicle: 'Cauliflower rice as the default rice replacement.',
+  },
+  {
+    title: 'Alaran pepper stew plate',
+    tag: 'Fish',
+    carbSignal: 'Low',
+    base: 'Mackerel in pepper stew with cucumber, cabbage, or steamed greens.',
+    protein: 'Use alaran as the main fish option. Swap to eggs when fish price is high.',
+    vehicle: 'Cabbage rice, cauliflower rice, or no swallow.',
+  },
+  {
+    title: 'Egg avocado greens plate',
+    tag: 'Fast breaker',
+    carbSignal: 'Low',
+    base: 'Eggs with avocado, cucumber, greens, and a small groundnut garnish.',
+    protein: 'Eggs carry the plate. Add gizzard if training day hunger is high.',
+    vehicle: 'No rice needed. Add soup or stew if you want heat.',
+  },
+  {
+    title: 'Quinoa lentil control bowl',
+    tag: 'Bowl',
+    carbSignal: 'Medium',
+    base: 'Small quinoa portion with lentils, greens, cucumber, and pepper sauce.',
+    protein: 'Add eggs or chicken so the bowl does not become carb-led.',
+    vehicle: 'Keep quinoa and lentils measured, especially on fasting days.',
+  },
+  {
+    title: 'Garbanzo salad bowl',
+    tag: 'Bowl',
+    carbSignal: 'Medium',
+    base: 'Garbanzo beans with avocado, cucumber, onions, pepper, and olive oil.',
+    protein: 'Add eggs, chicken, or gizzard for better satiety.',
+    vehicle: 'Best as a planned medium-carb meal, not a casual side.',
+  },
+  {
+    title: 'Cabbage rice stir-fry',
+    tag: 'Skillet',
+    carbSignal: 'Low',
+    base: 'Shredded cabbage stir-fried with pepper, onions, eggs, and a little oil.',
+    protein: 'Eggs are the budget version. Add chicken or gizzard for training days.',
+    vehicle: 'Use as the rice replacement beside soup or stew.',
+  },
+  {
+    title: 'Roasted corn and ube',
+    tag: 'Seasonal',
+    carbSignal: 'Relax',
+    base: 'May and June seasonal roasted corn with local pear.',
+    protein: 'Pair with eggs or fish later so the day is not only carb-led.',
+    vehicle: 'Relax-day item. Keep portion deliberate.',
+  },
+]
 
 function App() {
   const [selectedDate, setSelectedDate] = useState(todayIso)
@@ -448,6 +532,10 @@ function App() {
             <Utensils size={18} aria-hidden="true" />
             Meals
           </a>
+          <a href="#recipes">
+            <BookOpen size={18} aria-hidden="true" />
+            Recipes
+          </a>
           <a href="#fitness">
             <Dumbbell size={18} aria-hidden="true" />
             Fitness
@@ -477,13 +565,13 @@ function App() {
           <Utensils size={21} aria-hidden="true" />
           Meals
         </a>
+        <a href="#recipes">
+          <BookOpen size={21} aria-hidden="true" />
+          Recipes
+        </a>
         <a href="#fitness">
           <Dumbbell size={21} aria-hidden="true" />
           Training
-        </a>
-        <a href="#sync">
-          <Smartphone size={21} aria-hidden="true" />
-          Sync
         </a>
         <a href="#me">
           <HeartPulse size={21} aria-hidden="true" />
@@ -786,6 +874,30 @@ function App() {
                   <span>{rule.label}</span>
                   <strong>{rule.value}</strong>
                   <p>{rule.detail}</p>
+                </section>
+              ))}
+            </div>
+          </article>
+
+          <article id="recipes" className="panel recipes-panel">
+            <div className="panel-title">
+              <BookOpen size={20} aria-hidden="true" />
+              <h2>Recipes</h2>
+            </div>
+            <p className="recipes-intro">
+              Low-carb meals first, medium-carb meals controlled, relax foods clearly marked.
+            </p>
+            <div className="recipe-grid">
+              {recipeLibrary.map((recipe) => (
+                <section className={`recipe-card recipe-${recipe.carbSignal.toLowerCase()}`} key={recipe.title}>
+                  <div className="recipe-card-top">
+                    <span>{recipe.tag}</span>
+                    <strong>{recipe.carbSignal}</strong>
+                  </div>
+                  <h3>{recipe.title}</h3>
+                  <p>{recipe.base}</p>
+                  <small>{recipe.protein}</small>
+                  <small>{recipe.vehicle}</small>
                 </section>
               ))}
             </div>

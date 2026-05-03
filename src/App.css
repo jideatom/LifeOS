@@ -1043,6 +1043,106 @@ h3 {
   background: rgba(255, 241, 238, 0.88);
 }
 
+.recipes-panel {
+  grid-column: span 2;
+  background:
+    linear-gradient(135deg, rgba(255, 253, 248, 0.96), rgba(238, 248, 244, 0.94)),
+    #fffdf8;
+}
+
+.recipes-intro {
+  margin-top: 10px;
+  color: #40554f;
+  line-height: 1.5;
+}
+
+.recipe-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.recipe-card {
+  display: grid;
+  gap: 9px;
+  min-height: 190px;
+  padding: 14px;
+  border: 1px solid rgba(23, 32, 29, 0.1);
+  border-left-width: 5px;
+  border-radius: 8px;
+  background: rgba(255, 253, 248, 0.9);
+}
+
+.recipe-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.recipe-card-top span,
+.recipe-card-top strong {
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.recipe-card-top span {
+  color: #63726d;
+}
+
+.recipe-card-top strong {
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #eef2eb;
+  color: #17201d;
+}
+
+.recipe-card h3 {
+  color: #17201d;
+  line-height: 1.2;
+}
+
+.recipe-card p,
+.recipe-card small {
+  color: #40554f;
+  line-height: 1.45;
+}
+
+.recipe-card small {
+  display: block;
+}
+
+.recipe-low {
+  border-left-color: #228452;
+}
+
+.recipe-low .recipe-card-top strong {
+  background: rgba(34, 132, 82, 0.13);
+  color: #1b5e59;
+}
+
+.recipe-medium {
+  border-left-color: #ba7a23;
+  background: rgba(255, 247, 229, 0.88);
+}
+
+.recipe-medium .recipe-card-top strong {
+  background: rgba(186, 122, 35, 0.14);
+  color: #7a4d11;
+}
+
+.recipe-relax {
+  border-left-color: #386f93;
+  background: rgba(239, 247, 251, 0.9);
+}
+
+.recipe-relax .recipe-card-top strong {
+  background: rgba(56, 111, 147, 0.13);
+  color: #254f69;
+}
+
 .fasting-phases-panel {
   grid-column: span 2;
   border-color: rgba(27, 94, 89, 0.18);
@@ -1372,6 +1472,10 @@ h3 {
     grid-column: auto;
   }
 
+  .recipes-panel {
+    grid-column: auto;
+  }
+
   .nutrition-command-panel {
     grid-column: auto;
   }
@@ -1485,6 +1589,7 @@ h3 {
   nav,
   .signal-grid,
   .nutrition-rule-grid,
+  .recipe-grid,
   .metric-grid {
     grid-template-columns: 1fr;
   }
