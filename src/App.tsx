@@ -15,10 +15,20 @@ import {
   Smartphone,
   TimerReset,
   Utensils,
+  X,
 } from 'lucide-react'
 import type { CSSProperties } from 'react'
 import { useEffect, useMemo, useState } from 'react'
-import { getPlanForDate, getWeekPreview, shiftDate, todayIso } from './data/today'
+import {
+  DEFAULT_FASTING_PLAN,
+  FASTING_PHASE_MAX_HOURS,
+  FASTING_PLANS,
+  getPlanForDate,
+  getWeekPreview,
+  shiftDate,
+  todayIso,
+  type FastingPlan,
+} from './data/today'
 import { fastingProgress } from './domain/lifeos'
 import './App.css'
 import './TodayDashboard.css'
@@ -38,22 +48,54 @@ function formatFastHours(hours: number) {
   return `${wholeHours}h ${minutes.toString().padStart(2, '0')}m`
 }
 
+function formatTargetHours(hours: number) {
+  return Number.isInteger(hours) ? `${hours}` : hours.toFixed(1)
+}
+
 function fastActionLabel(status: string) {
   if (status === 'Eating Window' || status === 'Completed') return 'Break Your Fast'
   if (status === 'Planned') return 'Start Fast'
   return 'End Fast'
 }
 
+function planTone(level: FastingPlan['level']) {
+  if (level === 'Advanced') return 'warm'
+  if (level === 'Custom') return 'pink'
+  if (level === 'Hot') return 'blue'
+  return 'mint'
+}
+
 function App() {
   const [selectedDate, setSelectedDate] = useState(todayIso)
   const [clock, setClock] = useState(() => new Date())
-  const todayPlan = useMemo(() => getPlanForDate(selectedDate, clock), [selectedDate, clock])
+  const [selectedFastingPlan, setSelectedFastingPlan] = useState(DEFAULT_FASTING_PLAN)
+  const [isPlanPickerOpen, setIsPlanPickerOpen] = useState(false)
+  const [customFastingHours, setCustomFastingHours] = useState(16)
+  const [customEatingHours, setCustomEatingHours] = useState(8)
+  const customPlan = useMemo<FastingPlan>(
+    () => ({
+      id: `custom-${customFastingHours}-${customEatingHours}`,
+      protocol: 'Custom',
+      title: customEatingHours > 0 ? `${customFastingHours}:${customEatingHours}` : `${customFastingHours}h`,
+      fastingHours: customFastingHours,
+      eatingHours: customEatingHours,
+      level: 'Custom',
+      note: 'Custom LifeOS plan',
+    }),
+    [customEatingHours, customFastingHours],
+  )
+  const todayPlan = useMemo(
+    () => getPlanForDate(selectedDate, clock, selectedFastingPlan),
+    [selectedDate, clock, selectedFastingPlan],
+  )
   const weekPreview = useMemo(() => getWeekPreview(selectedDate), [selectedDate])
   const { log, fasting, fastingPhases, meals, workout, syncMetrics, priorities } = todayPlan
   const progress = fastingProgress(fasting)
   const activeFastingPhase = fastingPhases.find((phase) => phase.status === 'Active') ?? fastingPhases[0]
+  const ringTargetHours = Math.min(fasting.targetHours, FASTING_PHASE_MAX_HOURS)
+  const ringPhaseMarkers = fastingPhases.filter((phase) => phase.startsAtHour <= ringTargetHours)
+  const phaseMapProgress = Math.min(100, (fasting.elapsedHours / ringTargetHours) * 100)
   const phasePointerAngle = progress * 3.6
-  const visiblePhaseMarkers = fastingPhases.filter((phase) => phase.startsAtHour <= fasting.targetHours)
   const completedDays = weekPreview.filter((day) => day.type === 'Fasting/Healthy' && day.date <= selectedDate).length
 
   useEffect(() => {
@@ -150,7 +192,7 @@ function App() {
           <div>
             <span className="eyebrow">{log.day}</span>
             <strong>{log.date}</strong>
-            <p>{log.dayType} · {log.fastProtocol} · {workout.plan}</p>
+            <p>{log.dayType} · {selectedFastingPlan.title} · {workout.plan}</p>
           </div>
           <div className="date-actions">
             <button type="button" onClick={() => setSelectedDate((date) => shiftDate(date, -1))}>
@@ -191,7 +233,12 @@ function App() {
                 <CircleCheck size={16} aria-hidden="true" />
                 <strong>{completedDays}</strong>
               </div>
-              <button className="fast-add-button" type="button" aria-label="Add fasting note">
+              <button
+                className="fast-add-button"
+                type="button"
+                aria-label="Choose fasting plan"
+                onClick={() => setIsPlanPickerOpen(true)}
+              >
                 <Plus size={18} aria-hidden="true" />
               </button>
             </div>
@@ -215,43 +262,40 @@ function App() {
               style={
                 {
                   '--fast-progress': `${progress}%`,
+                  '--phase-map-progress': `${phaseMapProgress}%`,
                   '--phase-pointer-angle': `${phasePointerAngle}deg`,
                 } as CSSProperties
               }
               aria-label={`Fasting progress ${progress} percent`}
             >
+              <div className="fast-plan-target" aria-label={`${formatTargetHours(fasting.targetHours)} hour fast`}>
+                <strong>{formatTargetHours(fasting.targetHours)}</strong>
+                <span>h</span>
+              </div>
               <div className="phase-pointer" aria-hidden="true">
                 <Flame size={17} />
               </div>
-              {visiblePhaseMarkers.map((phase) => (
-                <div
+              {ringPhaseMarkers.map((phase) => (
+                <a
+                  href="#fasting-phases"
                   className={`phase-tick phase-tick-${phase.status.toLowerCase()}`}
                   key={phase.id}
                   style={
                     {
-                      '--marker-angle': `${Math.min(360, (phase.startsAtHour / fasting.targetHours) * 360)}deg`,
+                      '--marker-angle': `${Math.min(360, (phase.startsAtHour / ringTargetHours) * 360)}deg`,
                     } as CSSProperties
                   }
                   title={phase.name}
-                  aria-hidden="true"
+                  aria-label={`Jump to ${phase.name} fasting phase`}
                 >
                   {phase.status === 'Active' ? <Flame size={13} /> : null}
-                </div>
+                </a>
               ))}
               <div className="fast-ring-center">
                 <Flame size={42} aria-hidden="true" />
                 <span>{formatFastHours(fasting.elapsedHours)}</span>
                 <small>{activeFastingPhase.name}</small>
               </div>
-            </div>
-            <div className="phase-rail" aria-label="Fasting phase progress">
-              {fastingPhases.map((phase) => (
-                <div className={`phase-chip phase-chip-${phase.status.toLowerCase()}`} key={phase.id}>
-                  {phase.status === 'Active' ? <ChevronRight size={14} aria-hidden="true" /> : null}
-                  <span>{phase.window}</span>
-                  <strong>{phase.name}</strong>
-                </div>
-              ))}
             </div>
             <div className="fast-meta">
               <p>
@@ -272,8 +316,11 @@ function App() {
               </p>
             </div>
             <div className="fast-note">
-              <strong>{fasting.protocol}</strong>
-              <span>{fasting.hydrationTargetLiters}L water target</span>
+              <strong>{selectedFastingPlan.title}</strong>
+              <span>
+                {selectedFastingPlan.fastingHours}h fasting
+                {selectedFastingPlan.eatingHours > 0 ? ` · ${selectedFastingPlan.eatingHours}h eating` : ' · no eating'}
+              </span>
             </div>
             <button className={`fast-primary-action action-${fasting.status.toLowerCase().replace(' ', '-')}`} type="button">
               {fastActionLabel(fasting.status)}
@@ -355,8 +402,12 @@ function App() {
           <article id="fasting-phases" className="panel fasting-phases-panel">
             <div className="panel-title">
               <Flame size={20} aria-hidden="true" />
-              <h2>Fasting Phases</h2>
+              <h2>Fasting Phases 0-96h</h2>
             </div>
+            <p className="phase-disclaimer">
+              Phase timing is approximate. Food choice, training, sleep, insulin sensitivity, and fast length can move the
+              boundaries.
+            </p>
             <div className="phase-stack">
               {fastingPhases.map((phase) => (
                 <section className={`phase-row phase-${phase.status.toLowerCase()}`} key={phase.id}>
@@ -369,6 +420,7 @@ function App() {
                     <h3>{phase.name}</h3>
                     <p>{phase.essence}</p>
                     <small>{phase.healthNote}</small>
+                    <small className="phase-source">{phase.sourceNote}</small>
                   </div>
                 </section>
               ))}
@@ -421,6 +473,107 @@ function App() {
           </article>
         </section>
       </section>
+
+      {isPlanPickerOpen ? (
+        <section className="plan-picker-backdrop" aria-label="Fasting plan picker">
+          <div className="plan-picker">
+            <header className="plan-picker-header">
+              <div>
+                <span className="eyebrow">Fasting type</span>
+                <h2>Choose fasting plan</h2>
+              </div>
+              <button type="button" onClick={() => setIsPlanPickerOpen(false)} aria-label="Close fasting plan picker">
+                <X size={20} aria-hidden="true" />
+              </button>
+            </header>
+
+            <section className="tailored-plan">
+              <div>
+                <strong>Tailored Plan</strong>
+                <p>Use your LifeOS rhythm, workout days, and Yoruba meals to choose the fast you can repeat.</p>
+              </div>
+              <button type="button" onClick={() => setSelectedFastingPlan(DEFAULT_FASTING_PLAN)}>
+                Check
+              </button>
+            </section>
+
+            <section className="custom-plan-builder">
+              <div>
+                <span className="eyebrow">Custom plan</span>
+                <strong>{customPlan.title}</strong>
+              </div>
+              <label>
+                Fast
+                <input
+                  min="1"
+                  max="96"
+                  type="number"
+                  value={customFastingHours}
+                  onChange={(event) => setCustomFastingHours(Number(event.target.value))}
+                />
+              </label>
+              <label>
+                Eat
+                <input
+                  min="0"
+                  max="23"
+                  type="number"
+                  value={customEatingHours}
+                  onChange={(event) => setCustomEatingHours(Number(event.target.value))}
+                />
+              </label>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedFastingPlan(customPlan)
+                  setIsPlanPickerOpen(false)
+                }}
+              >
+                Apply
+              </button>
+            </section>
+
+            {(['Hot', 'Basic', 'Intermediate', 'Advanced', 'Custom'] as const).map((level) => (
+              <section className="plan-section" key={level}>
+                <div className="plan-section-title">
+                  <h3>{level === 'Custom' ? 'Customized plans' : `${level} plans`}</h3>
+                  <p>
+                    {level === 'Hot'
+                      ? 'Popular fasts'
+                      : level === 'Basic'
+                        ? 'Easy to get started'
+                        : level === 'Intermediate'
+                          ? 'Most people can build toward these'
+                          : level === 'Advanced'
+                            ? 'Challenging fasting windows'
+                            : 'Create or test longer protocols'}
+                  </p>
+                </div>
+                <div className="plan-grid">
+                  {FASTING_PLANS.filter((plan) => plan.level === level).map((plan) => (
+                    <button
+                      type="button"
+                      className={`plan-card plan-${planTone(plan.level)} ${
+                        selectedFastingPlan.id === plan.id ? 'selected' : ''
+                      }`}
+                      key={plan.id}
+                      onClick={() => {
+                        setSelectedFastingPlan(plan)
+                        setIsPlanPickerOpen(false)
+                      }}
+                    >
+                      <span>{plan.title}</span>
+                      <p>{plan.fastingHours}h fasting</p>
+                      <p>{plan.eatingHours > 0 ? `${plan.eatingHours}h eating` : 'No eating'}</p>
+                      <strong>{plan.note}</strong>
+                    </button>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+        </section>
+      ) : null}
     </main>
   )
 }

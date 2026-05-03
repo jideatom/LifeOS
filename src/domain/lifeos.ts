@@ -18,13 +18,15 @@ export type NutritionMode =
   | 'General low-carb'
   | 'Seasonal relax'
 
+export type FastingProtocol = '12:12' | '13:11' | '14:10' | '15:9' | '16:8' | '17:7' | '18:6' | '19:5' | '20:4' | '21:3' | '22:2' | '23:1' | '24h' | '30h' | '48h' | '72h' | '96h' | 'Custom' | 'No strict fast'
+
 export type DailyHealthLog = {
   id: string
   day: string
   date: string
   dayType: DayType
   fastingStatus: FastingStatus
-  fastProtocol: '16:8' | '18:6' | '20:4' | 'No strict fast'
+  fastProtocol: FastingProtocol
   eatingWindow: string
   nutritionMode: NutritionMode
   workoutPlan: WorkoutPlan
@@ -67,14 +69,13 @@ export type MealPlanItem = {
 }
 
 export type FastingSession = {
-  protocol: DailyHealthLog['fastProtocol']
+  protocol: FastingProtocol
   status: FastingStatus
   startedAt: string
   targetEndAt: string
   eatingWindow: string
   targetHours: number
   elapsedHours: number
-  hydrationTargetLiters: number
 }
 
 export type FastingPhase = {
@@ -82,9 +83,11 @@ export type FastingPhase = {
   name: string
   window: string
   startsAtHour: number
+  endsAtHour: number
   status: 'Completed' | 'Active' | 'Upcoming'
   essence: string
   healthNote: string
+  sourceNote: string
 }
 
 export type WorkoutSession = {

@@ -2,6 +2,7 @@ import type {
   DailyCommandPlan,
   DayType,
   FastingPhase,
+  FastingProtocol,
   FastingSession,
   MealPlanItem,
   NutritionMode,
@@ -12,54 +13,137 @@ import { computeReadiness } from '../domain/lifeos'
 
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
+export const FASTING_PHASE_MAX_HOURS = 96
+
+export type FastingPlan = {
+  id: string
+  protocol: FastingProtocol
+  title: string
+  fastingHours: number
+  eatingHours: number
+  level: 'Hot' | 'Basic' | 'Intermediate' | 'Advanced' | 'Custom'
+  note: string
+}
+
+export const FASTING_PLANS: FastingPlan[] = [
+  { id: '16-8-hot', protocol: '16:8', title: '16:8', fastingHours: 16, eatingHours: 8, level: 'Hot', note: 'Most popular' },
+  { id: '23-1-hot', protocol: '23:1', title: '23:1', fastingHours: 23, eatingHours: 1, level: 'Hot', note: 'OMAD' },
+  { id: '20-4-hot', protocol: '20:4', title: '20:4', fastingHours: 20, eatingHours: 4, level: 'Hot', note: 'Warrior diet' },
+  { id: '14-10-hot', protocol: '14:10', title: '14:10', fastingHours: 14, eatingHours: 10, level: 'Hot', note: 'Easy to start' },
+  { id: '18-6-hot', protocol: '18:6', title: '18:6', fastingHours: 18, eatingHours: 6, level: 'Hot', note: 'Fat burning' },
+  { id: '72h-hot', protocol: '72h', title: '72h', fastingHours: 72, eatingHours: 0, level: 'Hot', note: 'Extended fast' },
+  { id: '12-12-basic', protocol: '12:12', title: '12:12', fastingHours: 12, eatingHours: 12, level: 'Basic', note: 'Beginner reset' },
+  { id: '13-11-basic', protocol: '13:11', title: '13:11', fastingHours: 13, eatingHours: 11, level: 'Basic', note: 'Gentle rhythm' },
+  { id: '14-10-basic', protocol: '14:10', title: '14:10', fastingHours: 14, eatingHours: 10, level: 'Basic', note: 'Easy weekday fast' },
+  { id: '15-9-basic', protocol: '15:9', title: '15:9', fastingHours: 15, eatingHours: 9, level: 'Basic', note: 'Bridge to 16:8' },
+  { id: '16-8-mid', protocol: '16:8', title: '16:8', fastingHours: 16, eatingHours: 8, level: 'Intermediate', note: 'Daily default' },
+  { id: '17-7-mid', protocol: '17:7', title: '17:7', fastingHours: 17, eatingHours: 7, level: 'Intermediate', note: 'Slightly tighter' },
+  { id: '18-6-mid', protocol: '18:6', title: '18:6', fastingHours: 18, eatingHours: 6, level: 'Intermediate', note: 'Fat burning' },
+  { id: '19-5-mid', protocol: '19:5', title: '19:5', fastingHours: 19, eatingHours: 5, level: 'Intermediate', note: 'Small window' },
+  { id: '20-4-advanced', protocol: '20:4', title: '20:4', fastingHours: 20, eatingHours: 4, level: 'Advanced', note: 'Warrior diet' },
+  { id: '21-3-advanced', protocol: '21:3', title: '21:3', fastingHours: 21, eatingHours: 3, level: 'Advanced', note: 'Short window' },
+  { id: '22-2-advanced', protocol: '22:2', title: '22:2', fastingHours: 22, eatingHours: 2, level: 'Advanced', note: 'Very tight' },
+  { id: '23-1-advanced', protocol: '23:1', title: '23:1', fastingHours: 23, eatingHours: 1, level: 'Advanced', note: 'OMAD' },
+  { id: 'custom', protocol: 'Custom', title: 'Customize', fastingHours: 16, eatingHours: 8, level: 'Custom', note: 'Create your own' },
+  { id: '24h-custom', protocol: '24h', title: '24h', fastingHours: 24, eatingHours: 0, level: 'Custom', note: '1 day fasting' },
+  { id: '30h-custom', protocol: '30h', title: '30h', fastingHours: 30, eatingHours: 0, level: 'Custom', note: '1.25 days fasting' },
+  { id: '48h-custom', protocol: '48h', title: '48h', fastingHours: 48, eatingHours: 0, level: 'Custom', note: '2 days fasting' },
+  { id: '72h-custom', protocol: '72h', title: '72h', fastingHours: 72, eatingHours: 0, level: 'Custom', note: '3 days fasting' },
+  { id: '96h-custom', protocol: '96h', title: '96h', fastingHours: 96, eatingHours: 0, level: 'Custom', note: '4 days fasting' },
+]
+
+export const DEFAULT_FASTING_PLAN = FASTING_PLANS[0]
+
 const FASTING_PHASE_LIBRARY: Omit<FastingPhase, 'status'>[] = [
   {
     id: 'fed',
     name: 'Fed state',
     window: '0-4h',
     startsAtHour: 0,
-    essence: 'Food is still being digested and stored.',
-    healthNote: 'Keep this window calm: protein first, hydrate, and avoid turning supper into a second dinner.',
+    endsAtHour: 4,
+    essence: 'Meal energy is still available and insulin is usually higher than later in the fast.',
+    healthNote: 'Keep this window calm: protein first at supper and no accidental second dinner.',
+    sourceNote: 'Based on standard post-meal glucose and insulin handling described in fasting physiology reviews.',
   },
   {
     id: 'blood-sugar',
     name: 'Blood sugar settling',
     window: '4-8h',
     startsAtHour: 4,
-    essence: 'Insulin trends down and the body starts using stored fuel between meals.',
+    endsAtHour: 8,
+    essence: 'Insulin trends down and the body starts leaning more on stored fuel between meals.',
     healthNote: 'This is where late-night snacking usually breaks the plan. Water, tea, and sleep protect the fast.',
+    sourceNote: 'StatPearls notes gluconeogenesis begins several hours into fasting as blood glucose is maintained.',
   },
   {
     id: 'glycogen',
     name: 'Glycogen shift',
     window: '8-12h',
     startsAtHour: 8,
-    essence: 'The body leans more on stored glycogen and begins moving toward more fat use.',
+    endsAtHour: 12,
+    essence: 'Liver glycogen becomes more important for keeping blood glucose stable.',
     healthNote: 'Good zone for morning focus. Electrolytes help if you feel flat or headachy.',
+    sourceNote: 'NCBI material describes glycogenolysis and gluconeogenesis supporting glucose during fasting.',
   },
   {
     id: 'fat-burning',
     name: 'Fat-burning phase',
     window: '12-16h',
     startsAtHour: 12,
-    essence: 'Fat oxidation tends to rise as the fast gets longer.',
+    endsAtHour: 16,
+    essence: 'Fat oxidation tends to rise as fasting lengthens and insulin remains lower.',
     healthNote: 'This is the practical 16:8 sweet spot: strong enough for consistency without wrecking training.',
+    sourceNote: 'Clinical fasting guidance commonly frames 14-18h time-restricted eating as the daily fasting range.',
   },
   {
     id: 'ketone',
-    name: 'Ketone rise',
-    window: '16-20h',
+    name: 'Ketone ramp',
+    window: '16-24h',
     startsAtHour: 16,
-    essence: 'Ketones may become more noticeable, especially when carbs have been low.',
+    endsAtHour: 24,
+    essence: 'Ketone production may start becoming more noticeable, especially when carbs have been low.',
     healthNote: 'Useful for appetite control, but heavy lifting may need load discipline if readiness is low.',
+    sourceNote: 'Ketogenesis sources describe the shift toward fat-derived ketone production during fasting.',
   },
   {
-    id: 'autophagy',
+    id: 'glycogen-low',
+    name: 'Glycogen low',
+    window: '24-36h',
+    startsAtHour: 24,
+    endsAtHour: 36,
+    essence: 'Stored liver glycogen is usually much lower, so gluconeogenesis and fat metabolism carry more load.',
+    healthNote: 'This is no longer an ordinary weekday fast. Training, sleep, and stress should decide whether to continue.',
+    sourceNote: 'StatPearls describes gluconeogenesis peaking after about 24h as hepatic glycogen is depleted.',
+  },
+  {
+    id: 'autophagy-support',
     name: 'Autophagy support',
-    window: '20h+',
-    startsAtHour: 20,
-    essence: 'Cell cleanup pathways are thought to increase with longer fasts, but timing varies by person.',
-    healthNote: 'Treat this as an occasional advanced phase, not a daily requirement. Recovery still matters.',
+    window: '36-48h',
+    startsAtHour: 36,
+    endsAtHour: 48,
+    essence: 'Cell cleanup pathways may increase, but human timing varies and is not guaranteed by the clock.',
+    healthNote: 'Treat this as an advanced occasional fast, not a daily goal.',
+    sourceNote: 'Cleveland Clinic summarizes animal evidence suggesting autophagy may begin around 24-48h.',
+  },
+  {
+    id: 'deep-ketosis',
+    name: 'Deep ketosis',
+    window: '48-72h',
+    startsAtHour: 48,
+    endsAtHour: 72,
+    essence: 'Ketones can become a larger fuel source as carbohydrate availability stays low.',
+    healthNote: 'This level needs caution: pause if dizziness, weakness, palpitations, or poor sleep shows up.',
+    sourceNote: 'NCBI ketogenesis and fasting reviews describe ketones rising during prolonged carbohydrate scarcity.',
+  },
+  {
+    id: 'extended-fast',
+    name: 'Extended fast caution',
+    window: '72-96h',
+    startsAtHour: 72,
+    endsAtHour: 96,
+    essence: 'The body is deep into prolonged fasting physiology; ketone use is higher and recovery matters more.',
+    healthNote: 'Use this only with serious caution. Refeeding, medication, blood pressure, and training all matter here.',
+    sourceNote: 'Fasting physiology reviews describe several-day fasting as a different metabolic state from daily IF.',
   },
 ]
 
@@ -123,29 +207,25 @@ function dateTimeFromIsoAndTime(dateIso: string, time: string) {
 function calculateElapsedHours({
   dateIso,
   startedAt,
-  targetEndAt,
   targetHours,
   now,
 }: {
   dateIso: string
   startedAt: string
-  targetEndAt: string
   targetHours: number
   now: Date
 }) {
   const startDate = shiftDate(dateIso, -1)
   const start = dateTimeFromIsoAndTime(startDate, startedAt)
-  const targetEnd = dateTimeFromIsoAndTime(dateIso, targetEndAt)
   const selected = dateFromIso(dateIso)
   const today = dateFromIso(todayIso())
 
   if (selected.getTime() < today.getTime()) return targetHours
   if (selected.getTime() > today.getTime()) return 0
   if (now.getTime() <= start.getTime()) return 0
-  if (now.getTime() >= targetEnd.getTime()) return targetHours
 
   const elapsedMs = now.getTime() - start.getTime()
-  return Math.max(0, Math.min(targetHours, elapsedMs / (1000 * 60 * 60)))
+  return Math.max(0, Math.min(FASTING_PHASE_MAX_HOURS, elapsedMs / (1000 * 60 * 60)))
 }
 
 function fastingStatusForElapsed(elapsedHours: number, targetHours: number): FastingSession['status'] {
@@ -154,54 +234,55 @@ function fastingStatusForElapsed(elapsedHours: number, targetHours: number): Fas
   return 'Fasting'
 }
 
-function fastingForDate(dateIso: string, now: Date): FastingSession {
+export function fastingForDateWithPlan(dateIso: string, now: Date, plan: FastingPlan): FastingSession {
+  const eatingStartHour = (20 + plan.fastingHours) % 24
+  const eatingWindow =
+    plan.eatingHours > 0
+      ? `${`${eatingStartHour}`.padStart(2, '0')}:00-20:00`
+      : 'No eating window'
+
   if (isRelaxDay(dateIso)) {
     const elapsedHours = calculateElapsedHours({
       dateIso,
       startedAt: '21:00',
-      targetEndAt: '11:00',
-      targetHours: 14,
+      targetHours: plan.fastingHours,
       now,
     })
 
     return {
-      protocol: 'No strict fast',
-      status: fastingStatusForElapsed(elapsedHours, 14),
+      protocol: plan.protocol,
+      status: fastingStatusForElapsed(elapsedHours, plan.fastingHours),
       startedAt: '21:00',
       targetEndAt: '11:00',
-      eatingWindow: '11:00-20:00',
-      targetHours: 14,
+      eatingWindow,
+      targetHours: plan.fastingHours,
       elapsedHours,
-      hydrationTargetLiters: 3,
     }
   }
 
   const elapsedHours = calculateElapsedHours({
     dateIso,
     startedAt: '20:00',
-    targetEndAt: '12:00',
-    targetHours: 16,
+    targetHours: plan.fastingHours,
     now,
   })
 
   return {
-    protocol: '16:8',
-    status: fastingStatusForElapsed(elapsedHours, 16),
+    protocol: plan.protocol,
+    status: fastingStatusForElapsed(elapsedHours, plan.fastingHours),
     startedAt: '20:00',
-    targetEndAt: '12:00',
-    eatingWindow: '12:00-20:00',
-    targetHours: 16,
+    targetEndAt: `${`${eatingStartHour}`.padStart(2, '0')}:00`,
+    eatingWindow,
+    targetHours: plan.fastingHours,
     elapsedHours,
-    hydrationTargetLiters: 3.2,
   }
 }
 
 function fastingPhasesForSession(session: FastingSession): FastingPhase[] {
-  return FASTING_PHASE_LIBRARY.map((phase, index) => {
-    const nextPhase = FASTING_PHASE_LIBRARY[index + 1]
+  return FASTING_PHASE_LIBRARY.map((phase) => {
     const isActive =
       session.elapsedHours >= phase.startsAtHour &&
-      (nextPhase === undefined || session.elapsedHours < nextPhase.startsAtHour)
+      session.elapsedHours < phase.endsAtHour
 
     return {
       ...phase,
@@ -348,7 +429,7 @@ function prioritiesForDate(dateIso: string) {
     return [
       'Keep the relax day controlled, not chaotic.',
       'Use cauliflower or cabbage rice before any real rice.',
-      'Hit hydration target before supper.',
+      'Drink to thirst and keep salt/electrolytes sensible.',
       'Prepare the next StrongLifts session before bed.',
     ]
   }
@@ -361,11 +442,15 @@ function prioritiesForDate(dateIso: string) {
   ]
 }
 
-export function getPlanForDate(dateIso: string, now = new Date()): DailyCommandPlan {
+export function getPlanForDate(dateIso: string, now = new Date(), fastingPlan = DEFAULT_FASTING_PLAN): DailyCommandPlan {
   const importedSignals = signalsForDate(dateIso)
   const relax = isRelaxDay(dateIso)
   const workout = workoutForDate(dateIso)
-  const fasting = fastingForDate(dateIso, now)
+  const fasting = fastingForDateWithPlan(dateIso, now, relax ? {
+    ...fastingPlan,
+    protocol: fastingPlan.protocol === '16:8' ? 'No strict fast' : fastingPlan.protocol,
+    title: fastingPlan.protocol === '16:8' ? 'No strict fast' : fastingPlan.title,
+  } : fastingPlan)
   const dayType: DayType = relax ? 'Relax' : 'Fasting/Healthy'
   const nutritionMode: NutritionMode = relax ? 'Yoruba relax' : 'Yoruba low-carb'
 
