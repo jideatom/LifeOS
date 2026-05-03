@@ -23,18 +23,21 @@ import {
   DEFAULT_FASTING_PLAN,
   FASTING_PHASE_MAX_HOURS,
   FASTING_PLANS,
+  getFastingPhasesForElapsed,
   getPlanForDate,
   getWeekPreview,
   shiftDate,
   todayIso,
   type FastingPlan,
 } from './data/today'
+import type { FastingSession } from './domain/lifeos'
 import { fastingProgress } from './domain/lifeos'
 import './App.css'
 import './TodayDashboard.css'
 
 const NOTION_LIFEOS_URL =
   'https://app.notion.com/p/LifeOS-Command-Center-3544ab8a5f28813d967af856319c8f67?source=copy_link'
+const ACTIVE_FAST_STORAGE_KEY = 'lifeos.activeFastStartIso'
 
 function readinessLabel(readiness: string) {
   if (readiness === 'Green') return 'Train as planned'
@@ -44,8 +47,10 @@ function readinessLabel(readiness: string) {
 
 function formatFastHours(hours: number) {
   const wholeHours = Math.floor(hours)
-  const minutes = Math.floor((hours - wholeHours) * 60)
-  return `${wholeHours}h ${minutes.toString().padStart(2, '0')}m`
+  const totalSeconds = Math.max(0, Math.floor(hours * 60 * 60))
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
+  return `${wholeHours}h ${minutes.toString().padStart(2, '0')}m ${seconds.toString().padStart(2, '0')}s`
 }
 
 function formatTargetHours(hours: number) {
@@ -56,6 +61,18 @@ function fastActionLabel(status: string) {
   if (status === 'Eating Window' || status === 'Completed') return 'Break Your Fast'
   if (status === 'Planned') return 'Start Fast'
   return 'End Fast'
+}
+
+function formatClockTime(date: Date) {
+  return new Intl.DateTimeFormat('en-NG', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(date)
+}
+
+function activeFastInitialValue() {
+  return window.localStorage.getItem(ACTIVE_FAST_STORAGE_KEY)
 }
 
 function planTone(level: FastingPlan['level']) {
@@ -70,6 +87,7 @@ function App() {
   const [clock, setClock] = useState(() => new Date())
   const [selectedFastingPlan, setSelectedFastingPlan] = useState(DEFAULT_FASTING_PLAN)
   const [isPlanPickerOpen, setIsPlanPickerOpen] = useState(false)
+  const [activeFastStartIso, setActiveFastStartIso] = useState<string | null>(activeFastInitialValue)
   const [customFastingHours, setCustomFastingHours] = useState(16)
   const [customEatingHours, setCustomEatingHours] = useState(8)
   const customPlan = useMemo<FastingPlan>(
@@ -89,7 +107,32 @@ function App() {
     [selectedDate, clock, selectedFastingPlan],
   )
   const weekPreview = useMemo(() => getWeekPreview(selectedDate), [selectedDate])
-  const { log, fasting, fastingPhases, meals, workout, syncMetrics, priorities } = todayPlan
+  const { log, meals, workout, syncMetrics, priorities } = todayPlan
+  const isTodaySelected = selectedDate === todayIso()
+  const isLiveFastActive = Boolean(activeFastStartIso && isTodaySelected)
+  const fasting = useMemo<FastingSession>(() => {
+    if (!activeFastStartIso || !isTodaySelected) return todayPlan.fasting
+
+    const startedAt = new Date(activeFastStartIso)
+    const elapsedHours = Math.max(
+      0,
+      Math.min(FASTING_PHASE_MAX_HOURS, (clock.getTime() - startedAt.getTime()) / (1000 * 60 * 60)),
+    )
+    const targetEnd = new Date(startedAt.getTime() + selectedFastingPlan.fastingHours * 60 * 60 * 1000)
+    const eatingEnd = new Date(targetEnd.getTime() + selectedFastingPlan.eatingHours * 60 * 60 * 1000)
+
+    return {
+      protocol: selectedFastingPlan.protocol,
+      status: elapsedHours >= selectedFastingPlan.fastingHours ? 'Eating Window' : 'Fasting',
+      startedAt: formatClockTime(startedAt),
+      targetEndAt: formatClockTime(targetEnd),
+      eatingWindow:
+        selectedFastingPlan.eatingHours > 0 ? `${formatClockTime(targetEnd)}-${formatClockTime(eatingEnd)}` : 'No eating',
+      targetHours: selectedFastingPlan.fastingHours,
+      elapsedHours,
+    }
+  }, [activeFastStartIso, clock, isTodaySelected, selectedFastingPlan, todayPlan.fasting])
+  const fastingPhases = useMemo(() => getFastingPhasesForElapsed(fasting.elapsedHours), [fasting.elapsedHours])
   const progress = fastingProgress(fasting)
   const activeFastingPhase = fastingPhases.find((phase) => phase.status === 'Active') ?? fastingPhases[0]
   const ringTargetHours = Math.min(fasting.targetHours, FASTING_PHASE_MAX_HOURS)
@@ -99,9 +142,31 @@ function App() {
   const completedDays = weekPreview.filter((day) => day.type === 'Fasting/Healthy' && day.date <= selectedDate).length
 
   useEffect(() => {
-    const timer = window.setInterval(() => setClock(new Date()), 60 * 1000)
+    const timer = window.setInterval(() => setClock(new Date()), 1000)
     return () => window.clearInterval(timer)
   }, [])
+
+  useEffect(() => {
+    if (activeFastStartIso) {
+      window.localStorage.setItem(ACTIVE_FAST_STORAGE_KEY, activeFastStartIso)
+      return
+    }
+
+    window.localStorage.removeItem(ACTIVE_FAST_STORAGE_KEY)
+  }, [activeFastStartIso])
+
+  function handleFastAction() {
+    if (isLiveFastActive) {
+      setActiveFastStartIso(null)
+      setClock(new Date())
+      return
+    }
+
+    const now = new Date()
+    setSelectedDate(todayIso())
+    setClock(now)
+    setActiveFastStartIso(now.toISOString())
+  }
 
   const commandSignals = [
     {
@@ -322,8 +387,12 @@ function App() {
                 {selectedFastingPlan.eatingHours > 0 ? ` · ${selectedFastingPlan.eatingHours}h eating` : ' · no eating'}
               </span>
             </div>
-            <button className={`fast-primary-action action-${fasting.status.toLowerCase().replace(' ', '-')}`} type="button">
-              {fastActionLabel(fasting.status)}
+            <button
+              className={`fast-primary-action action-${fasting.status.toLowerCase().replace(' ', '-')}`}
+              type="button"
+              onClick={handleFastAction}
+            >
+              {isLiveFastActive ? fastActionLabel(fasting.status) : 'Start Fast'}
             </button>
             <div className="phase-callout">
               <span>Current phase</span>

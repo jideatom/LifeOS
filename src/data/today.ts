@@ -278,17 +278,21 @@ export function fastingForDateWithPlan(dateIso: string, now: Date, plan: Fasting
   }
 }
 
-function fastingPhasesForSession(session: FastingSession): FastingPhase[] {
+export function getFastingPhasesForElapsed(elapsedHours: number): FastingPhase[] {
   return FASTING_PHASE_LIBRARY.map((phase) => {
     const isActive =
-      session.elapsedHours >= phase.startsAtHour &&
-      session.elapsedHours < phase.endsAtHour
+      elapsedHours >= phase.startsAtHour &&
+      elapsedHours < phase.endsAtHour
 
     return {
       ...phase,
-      status: isActive ? 'Active' : session.elapsedHours >= phase.startsAtHour ? 'Completed' : 'Upcoming',
+      status: isActive ? 'Active' : elapsedHours >= phase.startsAtHour ? 'Completed' : 'Upcoming',
     }
   })
+}
+
+function fastingPhasesForSession(session: FastingSession): FastingPhase[] {
+  return getFastingPhasesForElapsed(session.elapsedHours)
 }
 
 function mealsForDate(dateIso: string): MealPlanItem[] {
