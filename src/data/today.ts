@@ -311,11 +311,11 @@ function mealsForDate(dateIso: string): MealPlanItem[] {
       {
         id: 'main-meal',
         time: '15:00',
-        title: 'Alaran with efo riro and cauliflower rice',
+        title: 'Alaran soup bowl with cauliflower rice',
         role: 'Main meal',
         status: 'Planned',
         carbSignal: 'Low',
-        items: ['Alaran/mackerel', 'Efo riro without crayfish', 'Cauliflower rice', 'Cucumber'],
+        items: ['Alaran/mackerel', 'Soup: efo riro, okro or egusi without crayfish', 'Cauliflower rice', 'Cucumber'],
         budgetBackup: 'Swap fish for eggs, gizzard or turkey offcuts when fish price jumps.',
       },
       {
@@ -331,11 +331,11 @@ function mealsForDate(dateIso: string): MealPlanItem[] {
       {
         id: 'supper',
         time: '19:30',
-        title: 'Obe ata with croaker and cabbage rice',
+        title: 'Pepper stew with croaker and cabbage rice',
         role: 'Supper',
         status: 'Planned',
         carbSignal: 'Low',
-        items: ['Croaker', 'Obe ata', 'Cabbage rice', 'Side vegetables'],
+        items: ['Croaker', 'Pepper stew', 'Cabbage rice', 'Side vegetables'],
         budgetBackup: 'Use alaran, eggs or grilled chicken instead of croaker.',
       },
     ]
@@ -359,17 +359,17 @@ function mealsForDate(dateIso: string): MealPlanItem[] {
       role: 'Main meal',
       status: 'Planned',
       carbSignal: 'Low',
-      items: ['Ewedu or efo riro', 'Alaran or gizzard', 'Cabbage swallow', 'Pepper sauce'],
+      items: ['Soup: ewedu, efo riro, okro or egusi', 'Alaran or gizzard', 'Cabbage swallow', 'Pepper stew'],
       budgetBackup: 'Use eggs, chicken laps or gizzard when fish price is high.',
     },
     {
       id: 'supper',
       time: '19:15',
-      title: 'Obe ata with low-carb rice swap',
+      title: 'Pepper stew with low-carb rice swap',
       role: 'Supper',
       status: 'Planned',
       carbSignal: 'Low',
-      items: ['Obe ata', 'Cauliflower rice or cabbage rice', 'Eggs or mackerel', 'Vegetables'],
+      items: ['Pepper stew', 'Cauliflower rice or cabbage rice', 'Eggs or mackerel', 'Vegetables'],
       budgetBackup: 'Cabbage rice is the default backup if cauliflower is unavailable.',
     },
   ]

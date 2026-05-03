@@ -185,8 +185,8 @@ function App() {
   const nutritionRules = [
     {
       label: 'Plate rule',
-      value: 'Protein + soup/obe + low-carb vehicle',
-      detail: 'Cauliflower rice, cabbage rice or cabbage swallow before real rice/swallow.',
+      value: 'Protein + soup or stew + low-carb vehicle',
+      detail: 'Soups include efo riro, okro, egusi and ewedu. Stew covers pepper/tomato stew.',
     },
     {
       label: 'Protein fallback',
