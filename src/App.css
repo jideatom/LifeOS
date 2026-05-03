@@ -1123,6 +1123,91 @@ h3 {
   line-height: 1.5;
 }
 
+.recipe-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.recipe-action-row button,
+.recipe-edit-button {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid rgba(27, 94, 89, 0.18);
+  border-radius: 8px;
+  background: rgba(255, 253, 248, 0.92);
+  color: #1b5e59;
+  font: inherit;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.recipe-action-row button {
+  padding: 9px 12px;
+}
+
+.recipe-action-row button:hover,
+.recipe-edit-button:hover {
+  border-color: rgba(27, 94, 89, 0.38);
+  background: rgba(235, 247, 239, 0.96);
+}
+
+.recipe-action-row button:disabled {
+  opacity: 0.64;
+  cursor: wait;
+}
+
+.recipe-sync-note {
+  margin-top: 10px;
+  color: #56655f;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.recipe-filter-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.recipe-filter-row button {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 10px;
+  border: 1px solid rgba(23, 32, 29, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 253, 248, 0.86);
+  color: #40554f;
+  font: inherit;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.recipe-filter-row button:hover,
+.recipe-filter-row button.active {
+  border-color: rgba(27, 94, 89, 0.32);
+  background: rgba(235, 247, 239, 0.96);
+  color: #1b5e59;
+}
+
+.recipe-filter-row strong {
+  min-width: 26px;
+  min-height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(27, 94, 89, 0.1);
+  font-size: 12px;
+}
+
 .recipe-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1179,6 +1264,14 @@ h3 {
 
 .recipe-card small {
   display: block;
+}
+
+.recipe-edit-button {
+  justify-self: start;
+  min-height: 34px;
+  margin-top: 4px;
+  padding: 7px 10px;
+  font-size: 13px;
 }
 
 .recipe-low {
@@ -1320,6 +1413,124 @@ h3 {
 
 .compact-panel {
   min-height: 180px;
+}
+
+.recipe-editor-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 22;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(23, 32, 29, 0.36);
+}
+
+.recipe-editor-sheet {
+  width: min(680px, 100%);
+  max-height: min(860px, 92vh);
+  overflow: auto;
+  padding: 22px;
+  border: 1px solid rgba(23, 32, 29, 0.12);
+  border-left: 5px solid #1b5e59;
+  border-radius: 14px;
+  background:
+    linear-gradient(135deg, rgba(238, 248, 244, 0.98), rgba(255, 253, 248, 0.98)),
+    #fffdf8;
+  box-shadow: 0 24px 70px rgba(23, 32, 29, 0.2);
+}
+
+.recipe-editor-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.recipe-editor-header h2 {
+  margin-top: 4px;
+  color: #17201d;
+}
+
+.recipe-editor-header button {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(23, 32, 29, 0.07);
+  color: #40554f;
+  cursor: pointer;
+}
+
+.recipe-editor-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.recipe-editor-grid label {
+  display: grid;
+  gap: 7px;
+  color: #40554f;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.recipe-editor-grid input,
+.recipe-editor-grid select,
+.recipe-editor-grid textarea {
+  width: 100%;
+  border: 1px solid rgba(23, 32, 29, 0.13);
+  border-radius: 8px;
+  background: #fffdf8;
+  color: #17201d;
+  font: inherit;
+  font-weight: 700;
+}
+
+.recipe-editor-grid input,
+.recipe-editor-grid select {
+  min-height: 46px;
+  padding: 10px 12px;
+}
+
+.recipe-editor-grid textarea {
+  min-height: 92px;
+  resize: vertical;
+  padding: 12px;
+  line-height: 1.5;
+}
+
+.recipe-editor-wide {
+  grid-column: 1 / -1;
+}
+
+.recipe-editor-actions {
+  display: flex;
+  justify-content: end;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.recipe-editor-actions button {
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 1px solid rgba(23, 32, 29, 0.12);
+  border-radius: 8px;
+  background: #fffdf8;
+  color: #40554f;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.recipe-editor-actions button[type="submit"] {
+  border-color: rgba(27, 94, 89, 0.2);
+  background: #1b5e59;
+  color: #fffdf8;
 }
 
 .priorities-panel {
@@ -1682,9 +1893,31 @@ h3 {
 
   nav,
   .nutrition-rule-grid,
+  .recipe-filter-row,
+  .recipe-editor-grid,
   .recipe-grid,
   .metric-grid {
     grid-template-columns: 1fr;
+  }
+
+  .recipe-action-row {
+    display: grid;
+  }
+
+  .recipe-editor-backdrop {
+    align-items: end;
+    padding: 0;
+  }
+
+  .recipe-editor-sheet {
+    width: 100%;
+    max-height: 88vh;
+    padding: 20px 16px 26px;
+    border-radius: 22px 22px 0 0;
+  }
+
+  .recipe-editor-actions {
+    display: grid;
   }
 
   .fast-card,
