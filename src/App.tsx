@@ -39,13 +39,10 @@ import './App.css'
 
 const NOTION_LIFEOS_URL =
   'https://app.notion.com/p/LifeOS-Command-Center-3544ab8a5f28813d967af856319c8f67?source=copy_link'
-const DEFAULT_NOTION_SYNC_ENDPOINT = 'https://life-os-lac-pi.vercel.app/api/recipes/upsert'
-const NOTION_SYNC_ENDPOINT = import.meta.env.VITE_LIFEOS_SYNC_API_URL ?? DEFAULT_NOTION_SYNC_ENDPOINT
 const ACTIVE_FAST_STORAGE_KEY = 'lifeos.activeFastStartIso'
 const FASTING_PLAN_STORAGE_KEY = 'lifeos.selectedFastingPlan'
 const CUSTOM_PLAN_STORAGE_KEY = 'lifeos.customFastingPlan'
 const PLANNED_FAST_START_TIME_STORAGE_KEY = 'lifeos.plannedFastStartTime'
-const RECIPES_STORAGE_KEY = 'lifeos.recipes'
 const TIME_OPTIONS = Array.from({ length: 24 * 12 }, (_, index) => {
   const totalMinutes = index * 5
   const hours = `${Math.floor(totalMinutes / 60)}`.padStart(2, '0')
@@ -209,220 +206,88 @@ function planTone(level: FastingPlan['level']) {
   return 'mint'
 }
 
-const RECIPE_CARB_SIGNALS = ['Low', 'Medium', 'Relax'] as const
-const RECIPE_FILTERS = ['All', ...RECIPE_CARB_SIGNALS] as const
-
-type RecipeCarbSignal = (typeof RECIPE_CARB_SIGNALS)[number]
-
-type Recipe = {
-  id: string
-  title: string
-  tag: string
-  carbSignal: RecipeCarbSignal
-  base: string
-  protein: string
-  vehicle: string
-  source: 'LifeOS' | 'Custom'
-  updatedAt: string
-}
-
-type RecipeDraft = Omit<Recipe, 'id' | 'source' | 'updatedAt'>
-
-const recipeLibrary: Recipe[] = [
+const recipeLibrary = [
   {
-    id: 'efo-riro-protein-bowl',
     title: 'Efo riro protein bowl',
     tag: 'Soup',
     carbSignal: 'Low',
     base: 'Efo riro with spinach/ugu, pepper mix, palm oil in a controlled portion.',
     protein: 'Best with eggs, gizzard, chicken laps, or alaran when budget allows.',
     vehicle: 'Cabbage swallow, eggplant swallow, or cauliflower rice.',
-    source: 'LifeOS',
-    updatedAt: '2026-05-03',
   },
   {
-    id: 'okro-soup-fast-breaker',
     title: 'Okro soup fast breaker',
     tag: 'Soup',
     carbSignal: 'Low',
     base: 'Okro cooked light with pepper, greens, and enough protein to make it filling.',
     protein: 'Use boiled eggs, chicken, gizzard, or mackerel. Skip crayfish and prawns.',
     vehicle: 'Cabbage swallow or a small side of sauteed cabbage.',
-    source: 'LifeOS',
-    updatedAt: '2026-05-03',
   },
   {
-    id: 'egusi-light-supper',
     title: 'Egusi light supper',
     tag: 'Soup',
     carbSignal: 'Low',
     base: 'Egusi with more greens than seed paste, cooked rich but not heavy.',
     protein: 'Eggs and chicken keep cost down. Croaker only when price makes sense.',
     vehicle: 'Cauliflower rice or eggplant swallow.',
-    source: 'LifeOS',
-    updatedAt: '2026-05-03',
   },
   {
-    id: 'pepper-stew-cauliflower-rice',
     title: 'Pepper stew cauliflower rice',
     tag: 'Stew',
     carbSignal: 'Low',
     base: 'Tomato and pepper stew over cauliflower rice with sauteed vegetables.',
     protein: 'Eggs, gizzard, chicken laps, or alaran.',
     vehicle: 'Cauliflower rice as the default rice replacement.',
-    source: 'LifeOS',
-    updatedAt: '2026-05-03',
   },
   {
-    id: 'alaran-pepper-stew-plate',
     title: 'Alaran pepper stew plate',
     tag: 'Fish',
     carbSignal: 'Low',
     base: 'Mackerel in pepper stew with cucumber, cabbage, or steamed greens.',
     protein: 'Use alaran as the main fish option. Swap to eggs when fish price is high.',
     vehicle: 'Cabbage rice, cauliflower rice, or no swallow.',
-    source: 'LifeOS',
-    updatedAt: '2026-05-03',
   },
   {
-    id: 'egg-avocado-greens-plate',
     title: 'Egg avocado greens plate',
     tag: 'Fast breaker',
     carbSignal: 'Low',
     base: 'Eggs with avocado, cucumber, greens, and a small groundnut garnish.',
     protein: 'Eggs carry the plate. Add gizzard if training day hunger is high.',
     vehicle: 'No rice needed. Add soup or stew if you want heat.',
-    source: 'LifeOS',
-    updatedAt: '2026-05-03',
   },
   {
-    id: 'quinoa-lentil-control-bowl',
     title: 'Quinoa lentil control bowl',
     tag: 'Bowl',
     carbSignal: 'Medium',
     base: 'Small quinoa portion with lentils, greens, cucumber, and pepper sauce.',
     protein: 'Add eggs or chicken so the bowl does not become carb-led.',
     vehicle: 'Keep quinoa and lentils measured, especially on fasting days.',
-    source: 'LifeOS',
-    updatedAt: '2026-05-03',
   },
   {
-    id: 'garbanzo-salad-bowl',
     title: 'Garbanzo salad bowl',
     tag: 'Bowl',
     carbSignal: 'Medium',
     base: 'Garbanzo beans with avocado, cucumber, onions, pepper, and olive oil.',
     protein: 'Add eggs, chicken, or gizzard for better satiety.',
     vehicle: 'Best as a planned medium-carb meal, not a casual side.',
-    source: 'LifeOS',
-    updatedAt: '2026-05-03',
   },
   {
-    id: 'cabbage-rice-stir-fry',
     title: 'Cabbage rice stir-fry',
     tag: 'Skillet',
     carbSignal: 'Low',
     base: 'Shredded cabbage stir-fried with pepper, onions, eggs, and a little oil.',
     protein: 'Eggs are the budget version. Add chicken or gizzard for training days.',
     vehicle: 'Use as the rice replacement beside soup or stew.',
-    source: 'LifeOS',
-    updatedAt: '2026-05-03',
   },
   {
-    id: 'roasted-corn-and-ube',
     title: 'Roasted corn and ube',
     tag: 'Seasonal',
     carbSignal: 'Relax',
     base: 'May and June seasonal roasted corn with local pear.',
     protein: 'Pair with eggs or fish later so the day is not only carb-led.',
     vehicle: 'Relax-day item. Keep portion deliberate.',
-    source: 'LifeOS',
-    updatedAt: '2026-05-03',
   },
 ]
-
-function emptyRecipeDraft(): RecipeDraft {
-  return {
-    title: '',
-    tag: 'Custom',
-    carbSignal: 'Low',
-    base: '',
-    protein: '',
-    vehicle: '',
-  }
-}
-
-function isRecipeCarbSignal(value: string): value is RecipeCarbSignal {
-  return RECIPE_CARB_SIGNALS.includes(value as RecipeCarbSignal)
-}
-
-function isRecipe(value: unknown): value is Recipe {
-  if (!value || typeof value !== 'object') return false
-  const recipe = value as Partial<Recipe>
-  return Boolean(
-    recipe.id &&
-      recipe.title &&
-      recipe.tag &&
-      recipe.base &&
-      recipe.protein &&
-      recipe.vehicle &&
-      recipe.carbSignal &&
-      isRecipeCarbSignal(recipe.carbSignal),
-  )
-}
-
-function storedRecipesInitialValue() {
-  const storedRecipes = window.localStorage.getItem(RECIPES_STORAGE_KEY)
-  if (!storedRecipes) return recipeLibrary
-
-  try {
-    const parsed = JSON.parse(storedRecipes) as unknown
-    if (Array.isArray(parsed)) {
-      const recipes = parsed.filter(isRecipe)
-      if (recipes.length > 0) return recipes
-    }
-  } catch {
-    window.localStorage.removeItem(RECIPES_STORAGE_KEY)
-  }
-
-  return recipeLibrary
-}
-
-function recipeId() {
-  if (window.crypto.randomUUID) return window.crypto.randomUUID()
-  return `custom-${Date.now()}`
-}
-
-function recipeToDraft(recipe: Recipe): RecipeDraft {
-  return {
-    title: recipe.title,
-    tag: recipe.tag,
-    carbSignal: recipe.carbSignal,
-    base: recipe.base,
-    protein: recipe.protein,
-    vehicle: recipe.vehicle,
-  }
-}
-
-function recipesToNotionMarkdown(recipes: Recipe[]) {
-  return [
-    '# LifeOS Recipes',
-    '',
-    `Last staged: ${new Date().toLocaleString('en-NG')}`,
-    '',
-    ...recipes.flatMap((recipe) => [
-      `## ${recipe.title}`,
-      `- Type: ${recipe.tag}`,
-      `- Carb signal: ${recipe.carbSignal}`,
-      `- Source: ${recipe.source}`,
-      `- Base: ${recipe.base}`,
-      `- Protein: ${recipe.protein}`,
-      `- Vehicle: ${recipe.vehicle}`,
-      `- Updated: ${recipe.updatedAt}`,
-      '',
-    ]),
-  ].join('\n')
-}
 
 function App() {
   const [selectedDate, setSelectedDate] = useState(todayIso)
@@ -434,16 +299,6 @@ function App() {
   const [timeDraftTime, setTimeDraftTime] = useState(plannedFastStartInitialValue)
   const [activeFastStartIso, setActiveFastStartIso] = useState<string | null>(activeFastInitialValue)
   const [plannedFastStartTime, setPlannedFastStartTime] = useState(plannedFastStartInitialValue)
-  const [recipeFilter, setRecipeFilter] = useState<(typeof RECIPE_FILTERS)[number]>('All')
-  const [recipes, setRecipes] = useState(storedRecipesInitialValue)
-  const [editingRecipeId, setEditingRecipeId] = useState<string | null>(null)
-  const [recipeDraft, setRecipeDraft] = useState<RecipeDraft>(emptyRecipeDraft)
-  const [isRecipeSyncing, setIsRecipeSyncing] = useState(false)
-  const [recipeSyncMessage, setRecipeSyncMessage] = useState(
-    NOTION_SYNC_ENDPOINT
-      ? 'Notion auto-sync is ready.'
-      : 'Notion auto-sync needs the private API URL. Local saving is active.',
-  )
   const storedCustomPlan = useMemo(() => storedCustomPlanInitialValue(), [])
   const [customFastingHours, setCustomFastingHours] = useState(storedCustomPlan.fastingHours)
   const [customEatingHours, setCustomEatingHours] = useState(storedCustomPlan.eatingHours)
@@ -534,21 +389,6 @@ function App() {
   const phaseMapProgress = isLiveFastActive ? Math.min(100, (fasting.elapsedHours / ringTargetHours) * 100) : 0
   const phasePointerAngle = isLiveFastActive ? progress * 3.6 : 0
   const completedDays = weekPreview.filter((day) => day.type === 'Fasting/Healthy' && day.date <= selectedDate).length
-  const recipeCounts = useMemo(
-    () =>
-      RECIPE_FILTERS.reduce(
-        (counts, filter) => ({
-          ...counts,
-          [filter]: filter === 'All' ? recipes.length : recipes.filter((recipe) => recipe.carbSignal === filter).length,
-        }),
-        {} as Record<(typeof RECIPE_FILTERS)[number], number>,
-      ),
-    [recipes],
-  )
-  const filteredRecipes = useMemo(
-    () => recipes.filter((recipe) => recipeFilter === 'All' || recipe.carbSignal === recipeFilter),
-    [recipeFilter, recipes],
-  )
   const nutritionRules = [
     {
       label: 'Plate rule',
@@ -601,10 +441,6 @@ function App() {
     )
   }, [customEatingHours, customFastingHours])
 
-  useEffect(() => {
-    window.localStorage.setItem(RECIPES_STORAGE_KEY, JSON.stringify(recipes))
-  }, [recipes])
-
   function handleFastAction() {
     if (isLiveFastActive) {
       setActiveFastStartIso(null)
@@ -641,94 +477,6 @@ function App() {
     setSelectedDate(isoFromLocalDate(adjustedStart))
     setPlannedFastStartTime(formatTimeInput(adjustedStart))
     setEditingTimeField(null)
-  }
-
-  function openRecipeEditor(recipe?: Recipe) {
-    setRecipeDraft(recipe ? recipeToDraft(recipe) : emptyRecipeDraft())
-    setEditingRecipeId(recipe?.id ?? 'new')
-  }
-
-  async function syncRecipesToNotion(nextRecipes: Recipe[]) {
-    if (!NOTION_SYNC_ENDPOINT) {
-      setRecipeSyncMessage('Saved locally. Add VITE_LIFEOS_SYNC_API_URL to enable Notion auto-sync.')
-      return
-    }
-
-    setIsRecipeSyncing(true)
-    setRecipeSyncMessage('Syncing recipes to Notion...')
-
-    try {
-      const response = await fetch(NOTION_SYNC_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ recipes: nextRecipes }),
-      })
-
-      if (!response.ok) {
-        throw new Error(`Notion sync failed with ${response.status}`)
-      }
-
-      setRecipeSyncMessage(`Synced ${nextRecipes.length} recipes to Notion.`)
-    } catch {
-      setRecipeSyncMessage('Saved locally, but Notion sync failed. Check the private API bridge.')
-    } finally {
-      setIsRecipeSyncing(false)
-    }
-  }
-
-  function saveRecipe() {
-    const trimmedDraft = {
-      ...recipeDraft,
-      title: recipeDraft.title.trim(),
-      tag: recipeDraft.tag.trim() || 'Custom',
-      base: recipeDraft.base.trim(),
-      protein: recipeDraft.protein.trim(),
-      vehicle: recipeDraft.vehicle.trim(),
-    }
-
-    if (!trimmedDraft.title || !trimmedDraft.base) return
-
-    const updatedAt = todayIso()
-    const nextRecipes: Recipe[] = (() => {
-      if (editingRecipeId && editingRecipeId !== 'new') {
-        return recipes.map((recipe) =>
-          recipe.id === editingRecipeId
-            ? {
-                ...recipe,
-                ...trimmedDraft,
-                source: recipe.source,
-                updatedAt,
-              }
-            : recipe,
-        )
-      }
-
-      return [
-        {
-          id: recipeId(),
-          ...trimmedDraft,
-          source: 'Custom' as const,
-          updatedAt,
-        },
-        ...recipes,
-      ]
-    })()
-
-    setRecipes(nextRecipes)
-    setRecipeSyncMessage('Saved locally. Syncing when a private Notion bridge is configured.')
-    setEditingRecipeId(null)
-    void syncRecipesToNotion(nextRecipes)
-  }
-
-  async function copyRecipesForNotion() {
-    try {
-      await window.navigator.clipboard.writeText(recipesToNotionMarkdown(recipes))
-      setRecipeSyncMessage('Copied Notion packet. Paste it into your Notion Recipes page/database.')
-    } catch {
-      setRecipeSyncMessage('Copy was blocked by the browser. The recipes are still saved locally.')
-    }
   }
 
   const commandSignals = [
@@ -1073,8 +821,8 @@ function App() {
               {meals.map((meal) => (
                 <section className={`meal-row carb-${meal.carbSignal.toLowerCase()}`} key={meal.id}>
                   <div className="meal-time">
-                    {meal.time ? <strong>{meal.time}</strong> : <span className="meal-time-flex">Set time when ready</span>}
-                    <span>{meal.role}{meals.length === 1 ? ' · OMAD' : ''}</span>
+                    <strong>{meal.time}</strong>
+                    <span>{meal.role}</span>
                   </div>
                   <div>
                     <div className="meal-heading">
@@ -1143,36 +891,8 @@ function App() {
             <p className="recipes-intro">
               Low-carb meals first, medium-carb meals controlled, relax foods clearly marked.
             </p>
-            <div className="recipe-action-row">
-              <button type="button" onClick={() => openRecipeEditor()}>
-                <Plus size={16} aria-hidden="true" />
-                Custom recipe
-              </button>
-              <button type="button" onClick={() => void syncRecipesToNotion(recipes)} disabled={isRecipeSyncing}>
-                <Database size={16} aria-hidden="true" />
-                {isRecipeSyncing ? 'Syncing...' : 'Sync Notion'}
-              </button>
-              <button type="button" onClick={copyRecipesForNotion}>
-                <Database size={16} aria-hidden="true" />
-                Copy Notion update
-              </button>
-            </div>
-            <p className="recipe-sync-note">{recipeSyncMessage}</p>
-            <div className="recipe-filter-row" aria-label="Recipe filter">
-              {RECIPE_FILTERS.map((filter) => (
-                <button
-                  className={recipeFilter === filter ? 'active' : ''}
-                  type="button"
-                  key={filter}
-                  onClick={() => setRecipeFilter(filter)}
-                >
-                  <span>{filter}</span>
-                  <strong>{recipeCounts[filter]}</strong>
-                </button>
-              ))}
-            </div>
             <div className="recipe-grid">
-              {filteredRecipes.map((recipe) => (
+              {recipeLibrary.map((recipe) => (
                 <section className={`recipe-card recipe-${recipe.carbSignal.toLowerCase()}`} key={recipe.title}>
                   <div className="recipe-card-top">
                     <span>{recipe.tag}</span>
@@ -1182,10 +902,6 @@ function App() {
                   <p>{recipe.base}</p>
                   <small>{recipe.protein}</small>
                   <small>{recipe.vehicle}</small>
-                  <button className="recipe-edit-button" type="button" onClick={() => openRecipeEditor(recipe)}>
-                    <Pencil size={14} aria-hidden="true" />
-                    Edit
-                  </button>
                 </section>
               ))}
             </div>
@@ -1265,98 +981,6 @@ function App() {
           </article>
         </section>
       </section>
-
-      {editingRecipeId ? (
-        <section className="recipe-editor-backdrop" aria-label="Recipe editor">
-          <form
-            className="recipe-editor-sheet"
-            onSubmit={(event) => {
-              event.preventDefault()
-              saveRecipe()
-            }}
-          >
-            <header className="recipe-editor-header">
-              <div>
-                <span className="eyebrow">{editingRecipeId === 'new' ? 'Custom option' : 'Edit recipe'}</span>
-                <h2>{editingRecipeId === 'new' ? 'Add what you actually ate' : 'Update recipe'}</h2>
-              </div>
-              <button type="button" onClick={() => setEditingRecipeId(null)} aria-label="Close recipe editor">
-                <X size={20} aria-hidden="true" />
-              </button>
-            </header>
-
-            <div className="recipe-editor-grid">
-              <label>
-                Recipe name
-                <input
-                  value={recipeDraft.title}
-                  onChange={(event) => setRecipeDraft((draft) => ({ ...draft, title: event.target.value }))}
-                  placeholder="Example: ayamase eggs bowl"
-                  required
-                />
-              </label>
-              <label>
-                Type
-                <input
-                  value={recipeDraft.tag}
-                  onChange={(event) => setRecipeDraft((draft) => ({ ...draft, tag: event.target.value }))}
-                  placeholder="Soup, Stew, Bowl..."
-                />
-              </label>
-              <label>
-                Carb signal
-                <select
-                  value={recipeDraft.carbSignal}
-                  onChange={(event) =>
-                    setRecipeDraft((draft) => ({
-                      ...draft,
-                      carbSignal: event.target.value as RecipeCarbSignal,
-                    }))
-                  }
-                >
-                  {RECIPE_CARB_SIGNALS.map((signal) => (
-                    <option value={signal} key={signal}>
-                      {signal}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="recipe-editor-wide">
-                Base
-                <textarea
-                  value={recipeDraft.base}
-                  onChange={(event) => setRecipeDraft((draft) => ({ ...draft, base: event.target.value }))}
-                  placeholder="What is the main dish?"
-                  required
-                />
-              </label>
-              <label className="recipe-editor-wide">
-                Protein
-                <textarea
-                  value={recipeDraft.protein}
-                  onChange={(event) => setRecipeDraft((draft) => ({ ...draft, protein: event.target.value }))}
-                  placeholder="Eggs, chicken, gizzard, alaran..."
-                />
-              </label>
-              <label className="recipe-editor-wide">
-                Vehicle / note
-                <textarea
-                  value={recipeDraft.vehicle}
-                  onChange={(event) => setRecipeDraft((draft) => ({ ...draft, vehicle: event.target.value }))}
-                  placeholder="Cauliflower rice, cabbage swallow, relax day..."
-                />
-              </label>
-            </div>
-
-            <div className="recipe-editor-actions">
-              <button type="button" onClick={() => setEditingRecipeId(null)}>
-                Cancel
-              </button>
-              <button type="submit">Save recipe</button>
-            </div>
-          </form>
-        </section>
-      ) : null}
 
       {isPlanPickerOpen ? (
         <section className="plan-picker-backdrop" aria-label="Fasting plan picker">
