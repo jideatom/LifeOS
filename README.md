@@ -1,15 +1,14 @@
 # LifeOS App
 
-LifeOS is a health operating system for fasting, Abuja nutrition, StrongLifts-style training, Fitbit recovery signals and Notion-backed daily planning.
+LifeOS is a health operating system for fasting, Abuja/Yoruba nutrition, StrongLifts-style training, Fitbit recovery signals and Notion-backed daily planning.
 
 ## Current Foundation
 
 - React + TypeScript + Vite dashboard
 - Fasting-first daily command center
-- Abuja low-carb nutrition model
+- Yoruba low-carb nutrition model
 - Home gym StrongLifts plan
 - Fitbit app -> Health Connect -> LifeOS sync design
-- Editable recipes with local save and optional Notion auto-sync bridge
 - Typed domain contracts in `src/domain/lifeos.ts`
 - Architecture notes in `docs/`
 
@@ -44,31 +43,3 @@ Primary Notion modules:
 - Exercise Library
 - Fitbit Sync Inbox
 - Weekly Review
-
-## Notion Recipe Auto-Sync
-
-The frontend never stores a Notion token. Recipe edits sync through `api/recipes/upsert.js`, which is designed for a private serverless host such as Vercel.
-
-Create a Notion database with these properties:
-
-- `Name` - title
-- `Type` - rich text
-- `Carb Signal` - rich text
-- `Base` - rich text
-- `Protein` - rich text
-- `Vehicle / Note` - rich text
-- `Source` - rich text
-- `LifeOS Key` - rich text, used by the sync bridge
-- `LifeOS ID` - optional Notion auto-number
-- `Updated At` - optional last edited time
-
-Serverless environment variables:
-
-- `NOTION_TOKEN` - internal Notion integration token
-- `NOTION_RECIPES_DATABASE_ID` - target recipes database id, currently `661c96696c3542948097e4e11ddbc545`
-- `NOTION_RECIPE_KEY_PROPERTY` - defaults to `LifeOS Key`
-- `LIFEOS_ALLOWED_ORIGIN` - optional, for example `https://jideatom.github.io`
-
-Frontend environment variable:
-
-- `VITE_LIFEOS_SYNC_API_URL` - full API URL. The app defaults to `https://life-os-jideatoms-projects.vercel.app/api/recipes/upsert`.
