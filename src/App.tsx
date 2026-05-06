@@ -51,6 +51,7 @@ import './App.css'
 
 const NOTION_LIFEOS_URL =
   'https://app.notion.com/p/LifeOS-Command-Center-3544ab8a5f28813d967af856319c8f67?source=copy_link'
+const LEARNING_PORTAL_URL = 'https://misimisys.github.io/portal/'
 const DEFAULT_NOTION_SYNC_ENDPOINT = 'https://life-os-lac-pi.vercel.app/api/recipes/upsert'
 const NOTION_SYNC_ENDPOINT = import.meta.env.VITE_LIFEOS_SYNC_API_URL ?? DEFAULT_NOTION_SYNC_ENDPOINT
 const ACTIVE_FAST_STORAGE_KEY = 'lifeos.activeFastStartIso'
@@ -1640,6 +1641,11 @@ function App() {
             Notion
             <ExternalLink className="nav-external" size={14} aria-hidden="true" />
           </a>
+          <a href={LEARNING_PORTAL_URL}>
+            <BookOpen size={18} aria-hidden="true" />
+            Portal
+            <ExternalLink className="nav-external" size={14} aria-hidden="true" />
+          </a>
         </nav>
       </aside>
 
@@ -1676,9 +1682,15 @@ function App() {
             <span className="eyebrow">Lifelong rhythm</span>
             <h1>Today Command Center</h1>
           </div>
-          <div className={`readiness readiness-${log.readiness.toLowerCase()}`}>
-            <span>{log.readiness}</span>
-            <strong>{readinessLabel(log.readiness)}</strong>
+          <div className="topbar-actions">
+            <a className="portal-switch" href={LEARNING_PORTAL_URL}>
+              <BookOpen size={17} aria-hidden="true" />
+              Portal
+            </a>
+            <div className={`readiness readiness-${log.readiness.toLowerCase()}`}>
+              <span>{log.readiness}</span>
+              <strong>{readinessLabel(log.readiness)}</strong>
+            </div>
           </div>
         </header>
 

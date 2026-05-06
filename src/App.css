@@ -100,6 +100,27 @@ nav a:hover {
   margin-bottom: 22px;
 }
 
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.portal-switch {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  border: 1px solid rgba(23, 32, 29, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 253, 248, 0.92);
+  color: #1b5e59;
+  text-decoration: none;
+  font-weight: 800;
+  box-shadow: 0 12px 24px rgba(27, 94, 89, 0.08);
+}
+
 h1,
 h2,
 h3,
@@ -2486,6 +2507,16 @@ h3 {
     display: grid;
     gap: 10px;
     margin-bottom: 0;
+  }
+
+  .topbar-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .portal-switch {
+    width: 100%;
+    justify-content: center;
   }
 
   .topbar h1 {
