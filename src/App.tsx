@@ -1217,7 +1217,6 @@ function App() {
       ? 'Notion auto-sync is ready.'
       : 'Notion auto-sync needs the private API URL. Local saving is active.',
   )
-  const planPickerRef = useRef<HTMLDivElement | null>(null)
   const [cloudSyncMessage, setCloudSyncMessage] = useState(
     hasSupabaseConfig ? 'Cloud sync ready. Loading shared LifeOS data.' : 'Cloud sync not configured. Using local device storage.',
   )
@@ -1531,11 +1530,6 @@ function App() {
 
     window.localStorage.removeItem(ACTIVE_CHALLENGE_STORAGE_KEY)
   }, [activeChallenge])
-
-  useEffect(() => {
-    if (!focusedPlan) return
-    planPickerRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
-  }, [focusedPlan])
 
   useEffect(() => {
     window.localStorage.setItem(PLANNED_FAST_START_TIME_STORAGE_KEY, plannedFastStartTime)
@@ -1994,14 +1988,89 @@ function App() {
   const stepsMetric = syncMetrics.find((metric) => metric.label === 'Steps')
   const zoneMetric = syncMetrics.find((metric) => metric.label === 'Zone mins')
   const restingHrMetric = syncMetrics.find((metric) => metric.label === 'Resting HR')
+  const recoverySignal = useMemo(() => {
+    const workoutStatus = loggedWorkoutForSelectedDay?.status ?? null
+
+    if (log.readiness === 'Green' && workoutStatus === 'Done') {
+      return {
+        value: 'Trained as planned',
+        trend: 'good' as const,
+        detail: `${workout.plan} was completed on a green-readiness day.`,
+        cta: 'Good day to keep progression moving.',
+      }
+    }
+
+    if (log.readiness === 'Green' && workoutStatus === 'Skipped') {
+      return {
+        value: 'Planned training missed',
+        trend: 'watch' as const,
+        detail: `${workout.plan} was skipped even though readiness was green.`,
+        cta: 'Review what blocked the session and reset tomorrow cleanly.',
+      }
+    }
+
+    if (log.readiness === 'Yellow' && workoutStatus === 'Done') {
+      return {
+        value: 'Managed load',
+        trend: 'neutral' as const,
+        detail: `${workout.plan} was completed on a yellow-readiness day.`,
+        cta: 'Solid call if form stayed tight and load stayed honest.',
+      }
+    }
+
+    if (log.readiness === 'Red' && workoutStatus === 'Skipped') {
+      return {
+        value: 'Recovery respected',
+        trend: 'good' as const,
+        detail: `${workout.plan} was skipped on a red-readiness day.`,
+        cta: 'That is the right kind of discipline. Recover, then come back stronger.',
+      }
+    }
+
+    if (log.readiness === 'Red' && workoutStatus === 'Done') {
+      return {
+        value: 'Pushed through recovery',
+        trend: 'watch' as const,
+        detail: `${workout.plan} was completed despite red readiness.`,
+        cta: 'Watch recovery closely before loading hard again.',
+      }
+    }
+
+    if (log.readiness === 'Yellow' && workoutStatus === 'Skipped') {
+      return {
+        value: 'Held back today',
+        trend: 'neutral' as const,
+        detail: `${workout.plan} was skipped on a yellow-readiness day.`,
+        cta: 'Okay if fatigue was real. Just avoid turning caution into drift.',
+      }
+    }
+
+    return {
+      value: readinessLabel(log.readiness),
+      trend: (log.readiness === 'Red' ? 'watch' : log.readiness === 'Yellow' ? 'neutral' : 'good') as
+        | 'watch'
+        | 'neutral'
+        | 'good',
+      detail: `${log.dayType} day with ${sleepHours.toFixed(1)}h sleep and ${sleepScore} sleep score.`,
+      cta: priorities[0],
+    }
+  }, [
+    log.dayType,
+    log.readiness,
+    loggedWorkoutForSelectedDay?.status,
+    priorities,
+    sleepHours,
+    sleepScore,
+    workout.plan,
+  ])
 
   const commandSignals = [
     {
       role: 'day',
       label: 'Recovery',
-      value: readinessLabel(log.readiness),
-      detail: `${log.dayType} day with ${sleepHours.toFixed(1)}h sleep and ${sleepScore} sleep score.`,
-      trend: log.readiness === 'Red' ? 'watch' : log.readiness === 'Yellow' ? 'neutral' : 'good',
+      value: recoverySignal.value,
+      detail: recoverySignal.detail,
+      trend: recoverySignal.trend,
       targetId: 'day-overview' as const,
       eyebrow: log.readiness,
       metrics: [
@@ -2009,7 +2078,7 @@ function App() {
         { label: 'Score', value: `${sleepScore}` },
         { label: 'RHR', value: `${restingHeartRate}` },
       ],
-      cta: priorities[0],
+      cta: recoverySignal.cta,
     },
     {
       role: 'nutrition',
@@ -3236,8 +3305,18 @@ function App() {
       ) : null}
 
       {isPlanPickerOpen ? (
-        <section className="plan-picker-backdrop" aria-label="Fasting plan picker">
-          <div className="plan-picker" ref={planPickerRef}>
+        <section
+          className="plan-picker-backdrop"
+          aria-label="Fasting plan picker"
+          onClick={() => {
+            if (focusedPlan) {
+              setFocusedPlan(null)
+              return
+            }
+            setIsPlanPickerOpen(false)
+          }}
+        >
+          <div className="plan-picker" onClick={(event) => event.stopPropagation()}>
             <header className="plan-picker-header">
               <div>
                 <span className="eyebrow">Fasting type</span>
@@ -3331,8 +3410,60 @@ function App() {
               </p>
             </section>
 
-            {focusedPlan ? (
-              <section className="plan-detail-card" aria-label={`${focusedPlan.title} fasting plan details`}>
+            <div className="plan-picker-body">
+              {(['Hot', 'Basic', 'Intermediate', 'Advanced', 'Custom'] as const).map((level) => (
+                <section className="plan-section" key={level}>
+                  <div className="plan-section-title">
+                    <h3>{level === 'Custom' ? 'Customized plans' : `${level} plans`}</h3>
+                    <p>
+                      {level === 'Hot'
+                        ? 'Popular fasts'
+                        : level === 'Basic'
+                          ? 'Easy to get started'
+                          : level === 'Intermediate'
+                            ? 'Most people can build toward these'
+                            : level === 'Advanced'
+                              ? 'Challenging fasting windows'
+                              : 'Create or test longer protocols'}
+                    </p>
+                  </div>
+                  <div className="plan-grid">
+                    {FASTING_PLANS.filter((plan) => plan.level === level).map((plan) => (
+                      <button
+                        type="button"
+                        className={`plan-card plan-${planTone(plan.level)} ${
+                          selectedFastingPlan.id === plan.id ? 'selected' : ''
+                        }`}
+                        key={plan.id}
+                        onClick={() => {
+                          setFocusedPlan(plan)
+                        }}
+                      >
+                        <span>{plan.title}</span>
+                        <p>{plan.fastingHours}h fasting</p>
+                        <p>{plan.eatingHours > 0 ? `${plan.eatingHours}h eating` : 'No eating'}</p>
+                        <strong>{plan.note}</strong>
+                      </button>
+                    ))}
+                  </div>
+                </section>
+              ))}
+            </div>
+          </div>
+
+          {focusedPlan ? (
+            <div
+              className="plan-detail-backdrop"
+              onClick={(event) => {
+                event.stopPropagation()
+                setFocusedPlan(null)
+              }}
+            >
+              <section
+                className="plan-detail-sheet"
+                aria-label={`${focusedPlan.title} fasting plan details`}
+                onClick={(event) => event.stopPropagation()}
+              >
                 <div className="plan-detail-top">
                   <button type="button" className="plan-detail-back" onClick={() => setFocusedPlan(null)}>
                     <ChevronRight size={18} aria-hidden="true" />
@@ -3414,46 +3545,8 @@ function App() {
                   </button>
                 </div>
               </section>
-            ) : null}
-
-            {(['Hot', 'Basic', 'Intermediate', 'Advanced', 'Custom'] as const).map((level) => (
-              <section className="plan-section" key={level}>
-                <div className="plan-section-title">
-                  <h3>{level === 'Custom' ? 'Customized plans' : `${level} plans`}</h3>
-                  <p>
-                    {level === 'Hot'
-                      ? 'Popular fasts'
-                      : level === 'Basic'
-                        ? 'Easy to get started'
-                        : level === 'Intermediate'
-                          ? 'Most people can build toward these'
-                          : level === 'Advanced'
-                            ? 'Challenging fasting windows'
-                            : 'Create or test longer protocols'}
-                  </p>
-                </div>
-                <div className="plan-grid">
-                  {FASTING_PLANS.filter((plan) => plan.level === level).map((plan) => (
-                    <button
-                      type="button"
-                      className={`plan-card plan-${planTone(plan.level)} ${
-                        selectedFastingPlan.id === plan.id ? 'selected' : ''
-                      }`}
-                      key={plan.id}
-                      onClick={() => {
-                        setFocusedPlan(plan)
-                      }}
-                    >
-                      <span>{plan.title}</span>
-                      <p>{plan.fastingHours}h fasting</p>
-                      <p>{plan.eatingHours > 0 ? `${plan.eatingHours}h eating` : 'No eating'}</p>
-                      <strong>{plan.note}</strong>
-                    </button>
-                  ))}
-                </div>
-              </section>
-            ))}
-          </div>
+            </div>
+          ) : null}
         </section>
       ) : null}
 
