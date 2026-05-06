@@ -1503,152 +1503,6 @@ function App() {
         </section>
 
         <section className="content-grid">
-          <article id="progress" className="panel progress-panel">
-            <div className="panel-title">
-              <CircleCheck size={20} aria-hidden="true" />
-              <h2>Progress</h2>
-            </div>
-            <div className="progress-grid">
-              <section className="progress-block progress-fasting">
-                <div className="progress-block-heading">
-                  <span>Fasting progress</span>
-                  <strong>{fastingStats.completedSessions} completed fasts</strong>
-                </div>
-                <div className="progress-stat-grid">
-                  <article className="progress-stat-card">
-                    <span>Current streak</span>
-                    <strong>{progressSummary.fastingStreak} days</strong>
-                  </article>
-                  <article className="progress-stat-card">
-                    <span>Longest fast</span>
-                    <strong>{formatTargetHours(fastingStats.longestFast)}h</strong>
-                  </article>
-                  <article className="progress-stat-card">
-                    <span>Average fast</span>
-                    <strong>{formatTargetHours(fastingStats.averageFast)}h</strong>
-                  </article>
-                  <article className="progress-stat-card">
-                    <span>This month</span>
-                    <strong>{fastingStats.monthlySessions}</strong>
-                  </article>
-                </div>
-                <div className="progress-subgrid">
-                  <section className="progress-list-card">
-                    <h3>Recent fasting records</h3>
-                    <div className="progress-list">
-                      {fastingHistory.slice(0, 5).map((entry) => (
-                        <article className="progress-list-row" key={entry.id}>
-                          <div>
-                            <strong>{entry.protocol}</strong>
-                            <p>{relativeDateLabel(entry.completedOn, selectedDate)}</p>
-                          </div>
-                          <span>{formatTargetHours(entry.actualHours)}h</span>
-                        </article>
-                      ))}
-                      {fastingHistory.length === 0 ? <p className="muted">Your completed fasts will stack here.</p> : null}
-                    </div>
-                  </section>
-                  <section className="progress-list-card">
-                    <h3>Protocol mix</h3>
-                    <div className="progress-list">
-                      {fastingStats.protocolBreakdown.map(([protocol, count]) => (
-                        <article className="progress-list-row" key={protocol}>
-                          <div>
-                            <strong>{protocol}</strong>
-                            <p>Completed sessions</p>
-                          </div>
-                          <span>{count}</span>
-                        </article>
-                      ))}
-                      {fastingStats.protocolBreakdown.length === 0 ? (
-                        <p className="muted">Protocol mix will appear once you log a few fasts.</p>
-                      ) : null}
-                    </div>
-                  </section>
-                </div>
-              </section>
-
-              <section className="progress-block progress-training">
-                <div className="progress-block-heading">
-                  <span>Training progress</span>
-                  <strong>{workoutStats.totalSessions} completed sessions</strong>
-                </div>
-                <div className="progress-stat-grid">
-                  <article className="progress-stat-card">
-                    <span>Current streak</span>
-                    <strong>{progressSummary.trainingStreak} days</strong>
-                  </article>
-                  <article className="progress-stat-card">
-                    <span>This week</span>
-                    <strong>{workoutStats.weeklyCompletions}</strong>
-                  </article>
-                  <article className="progress-stat-card">
-                    <span>This month</span>
-                    <strong>{workoutStats.monthlyCompletions}</strong>
-                  </article>
-                  <article className="progress-stat-card">
-                    <span>Skipped</span>
-                    <strong>{workoutStats.skippedSessions}</strong>
-                  </article>
-                </div>
-                <div className="progress-subgrid">
-                  <section className="progress-list-card">
-                    <h3>Recent workouts</h3>
-                    <div className="progress-list">
-                      {workoutLog.slice(0, 5).map((entry) => (
-                        <article className="progress-list-row" key={entry.id}>
-                          <div>
-                            <strong>{entry.plan}</strong>
-                            <p>
-                              {relativeDateLabel(entry.date, selectedDate)} · {entry.focus}
-                            </p>
-                          </div>
-                          <span>{entry.status}</span>
-                        </article>
-                      ))}
-                      {workoutLog.length === 0 ? <p className="muted">Logged training sessions will show here.</p> : null}
-                    </div>
-                  </section>
-                  <section className="progress-list-card">
-                    <h3>Current working weights</h3>
-                    <div className="progress-list">
-                      {progressSummary.topLiftChanges.map((lift) => (
-                        <article className="progress-list-row" key={lift.label}>
-                          <div>
-                            <strong>{lift.label}</strong>
-                            <p>{lift.failures > 0 ? `${lift.failures} missed session markers` : 'Clean progression run'}</p>
-                          </div>
-                          <span>{lift.weight} lb</span>
-                        </article>
-                      ))}
-                    </div>
-                  </section>
-                  <section className="progress-list-card">
-                    <h3>Workout mix</h3>
-                    <div className="progress-list">
-                      {workoutStats.planBreakdown.map(([plan, count]) => (
-                        <article className="progress-list-row" key={plan}>
-                          <div>
-                            <strong>{plan}</strong>
-                            <p>Completed sessions</p>
-                          </div>
-                          <span>{count}</span>
-                        </article>
-                      ))}
-                      {workoutStats.planBreakdown.length === 0 ? (
-                        <p className="muted">Once you log workouts, your plan mix will show up here.</p>
-                      ) : null}
-                    </div>
-                  </section>
-                </div>
-                <p className="progress-note">
-                  Weekly skips this cycle: {workoutStats.weeklySkips}. Use the lift cards in Training to mark wins,
-                  missed reps, and deloads as they happen.
-                </p>
-              </section>
-            </div>
-          </article>
-
           <article id="meals" className="panel meals-panel">
             <div className="panel-title">
               <Apple size={20} aria-hidden="true" />
@@ -2017,6 +1871,152 @@ function App() {
               Daily Health Log, Fasting Sessions, Meal Plan, Workout Log, Exercise Library, Fitbit
               Sync Inbox, and Weekly Reviews.
             </p>
+          </article>
+
+          <article id="progress" className="panel progress-panel">
+            <div className="panel-title">
+              <CircleCheck size={20} aria-hidden="true" />
+              <h2>Progress</h2>
+            </div>
+            <div className="progress-grid">
+              <section className="progress-block progress-fasting">
+                <div className="progress-block-heading">
+                  <span>Fasting progress</span>
+                  <strong>{fastingStats.completedSessions} completed fasts</strong>
+                </div>
+                <div className="progress-stat-grid">
+                  <article className="progress-stat-card">
+                    <span>Current streak</span>
+                    <strong>{progressSummary.fastingStreak} days</strong>
+                  </article>
+                  <article className="progress-stat-card">
+                    <span>Longest fast</span>
+                    <strong>{formatTargetHours(fastingStats.longestFast)}h</strong>
+                  </article>
+                  <article className="progress-stat-card">
+                    <span>Average fast</span>
+                    <strong>{formatTargetHours(fastingStats.averageFast)}h</strong>
+                  </article>
+                  <article className="progress-stat-card">
+                    <span>This month</span>
+                    <strong>{fastingStats.monthlySessions}</strong>
+                  </article>
+                </div>
+                <div className="progress-subgrid">
+                  <section className="progress-list-card">
+                    <h3>Recent fasting records</h3>
+                    <div className="progress-list">
+                      {fastingHistory.slice(0, 5).map((entry) => (
+                        <article className="progress-list-row" key={entry.id}>
+                          <div>
+                            <strong>{entry.protocol}</strong>
+                            <p>{relativeDateLabel(entry.completedOn, selectedDate)}</p>
+                          </div>
+                          <span>{formatTargetHours(entry.actualHours)}h</span>
+                        </article>
+                      ))}
+                      {fastingHistory.length === 0 ? <p className="muted">Your completed fasts will stack here.</p> : null}
+                    </div>
+                  </section>
+                  <section className="progress-list-card">
+                    <h3>Protocol mix</h3>
+                    <div className="progress-list">
+                      {fastingStats.protocolBreakdown.map(([protocol, count]) => (
+                        <article className="progress-list-row" key={protocol}>
+                          <div>
+                            <strong>{protocol}</strong>
+                            <p>Completed sessions</p>
+                          </div>
+                          <span>{count}</span>
+                        </article>
+                      ))}
+                      {fastingStats.protocolBreakdown.length === 0 ? (
+                        <p className="muted">Protocol mix will appear once you log a few fasts.</p>
+                      ) : null}
+                    </div>
+                  </section>
+                </div>
+              </section>
+
+              <section className="progress-block progress-training">
+                <div className="progress-block-heading">
+                  <span>Training progress</span>
+                  <strong>{workoutStats.totalSessions} completed sessions</strong>
+                </div>
+                <div className="progress-stat-grid">
+                  <article className="progress-stat-card">
+                    <span>Current streak</span>
+                    <strong>{progressSummary.trainingStreak} days</strong>
+                  </article>
+                  <article className="progress-stat-card">
+                    <span>This week</span>
+                    <strong>{workoutStats.weeklyCompletions}</strong>
+                  </article>
+                  <article className="progress-stat-card">
+                    <span>This month</span>
+                    <strong>{workoutStats.monthlyCompletions}</strong>
+                  </article>
+                  <article className="progress-stat-card">
+                    <span>Skipped</span>
+                    <strong>{workoutStats.skippedSessions}</strong>
+                  </article>
+                </div>
+                <div className="progress-subgrid">
+                  <section className="progress-list-card">
+                    <h3>Recent workouts</h3>
+                    <div className="progress-list">
+                      {workoutLog.slice(0, 5).map((entry) => (
+                        <article className="progress-list-row" key={entry.id}>
+                          <div>
+                            <strong>{entry.plan}</strong>
+                            <p>
+                              {relativeDateLabel(entry.date, selectedDate)} · {entry.focus}
+                            </p>
+                          </div>
+                          <span>{entry.status}</span>
+                        </article>
+                      ))}
+                      {workoutLog.length === 0 ? <p className="muted">Logged training sessions will show here.</p> : null}
+                    </div>
+                  </section>
+                  <section className="progress-list-card">
+                    <h3>Current working weights</h3>
+                    <div className="progress-list">
+                      {progressSummary.topLiftChanges.map((lift) => (
+                        <article className="progress-list-row" key={lift.label}>
+                          <div>
+                            <strong>{lift.label}</strong>
+                            <p>{lift.failures > 0 ? `${lift.failures} missed session markers` : 'Clean progression run'}</p>
+                          </div>
+                          <span>{lift.weight} lb</span>
+                        </article>
+                      ))}
+                    </div>
+                  </section>
+                  <section className="progress-list-card">
+                    <h3>Workout mix</h3>
+                    <div className="progress-list">
+                      {workoutStats.planBreakdown.map(([plan, count]) => (
+                        <article className="progress-list-row" key={plan}>
+                          <div>
+                            <strong>{plan}</strong>
+                            <p>Completed sessions</p>
+                          </div>
+                          <span>{count}</span>
+                        </article>
+                      ))}
+                      {workoutStats.planBreakdown.length === 0 ? (
+                        <p className="muted">Once you log workouts, your plan mix will show up here.</p>
+                      ) : null}
+                    </div>
+                  </section>
+                </div>
+                <p className="progress-note">
+                  Weekly skips this cycle: {workoutStats.weeklySkips}. Use the lift cards in Training to mark wins,
+                  missed reps, and deloads as they happen.
+                </p>
+              </section>
+            </div>
           </article>
         </section>
       </section>

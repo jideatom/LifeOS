@@ -851,14 +851,15 @@ h3 {
 .signal-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  gap: 12px;
 }
 
 .signal-card {
-  padding: 20px;
-  min-height: 154px;
+  padding: 14px 16px;
+  min-height: 112px;
   display: grid;
-  align-content: space-between;
+  align-content: start;
+  gap: 6px;
   border-left-width: 5px;
 }
 
@@ -886,8 +887,9 @@ h3 {
 
 .signal-card strong {
   display: block;
-  margin: 12px 0 8px;
-  font-size: 24px;
+  margin: 4px 0 0;
+  font-size: 20px;
+  line-height: 1.15;
 }
 
 .signal-card p,
@@ -897,6 +899,11 @@ h3 {
 .workout-row p {
   color: #56655f;
   line-height: 1.55;
+}
+
+.signal-card p {
+  font-size: 13px;
+  line-height: 1.45;
 }
 
 .signal-good,
@@ -2571,7 +2578,22 @@ h3 {
   }
 
   .signal-card {
-    min-height: 118px;
+    min-height: 88px;
+    padding: 12px;
+    gap: 4px;
+  }
+
+  .signal-card span {
+    font-size: 11px;
+  }
+
+  .signal-card strong {
+    font-size: 17px;
+  }
+
+  .signal-card p {
+    font-size: 12px;
+    line-height: 1.35;
   }
 
   .signal-card-button:hover {
