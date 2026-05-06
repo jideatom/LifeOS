@@ -959,6 +959,17 @@ h3 {
   gap: 16px;
 }
 
+.fitness-log-row,
+.meals-panel {
+  grid-column: 1 / -1;
+}
+
+.fitness-log-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+  gap: 16px;
+}
+
 .progress-panel {
   grid-column: 1 / -1;
   border-left: 5px solid #5267d6;
@@ -1096,7 +1107,6 @@ h3 {
 }
 
 .meals-panel {
-  grid-row: span 2;
   border-left: 5px solid #228452;
   background:
     linear-gradient(135deg, rgba(235, 247, 239, 0.9), rgba(255, 253, 248, 0.96)),
@@ -1120,6 +1130,45 @@ h3 {
   display: grid;
   gap: 12px;
   margin-top: 18px;
+}
+
+.meal-actions,
+.meal-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.meal-actions {
+  margin-top: 16px;
+}
+
+.meal-actions button,
+.meal-row-actions button {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 1px solid rgba(23, 32, 29, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 253, 248, 0.92);
+  color: #1b5e59;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.meal-actions button:disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
+}
+
+.meal-timeline-note {
+  margin-top: 10px;
+  color: #56655f;
+  line-height: 1.5;
 }
 
 .meal-row {
@@ -1169,6 +1218,10 @@ h3 {
 .meal-row small {
   display: block;
   margin-top: 8px;
+}
+
+.meal-row-actions {
+  margin-top: 12px;
 }
 
 .workout-status {
@@ -1923,6 +1976,13 @@ h3 {
   box-shadow: 0 24px 70px rgba(23, 32, 29, 0.2);
 }
 
+.meal-editor-sheet {
+  border-left-color: #228452;
+  background:
+    linear-gradient(135deg, rgba(235, 247, 239, 0.98), rgba(255, 253, 248, 0.98)),
+    #fffdf8;
+}
+
 .recipe-editor-header {
   display: flex;
   align-items: start;
@@ -2298,6 +2358,10 @@ h3 {
     grid-template-columns: 1fr;
   }
 
+  .fitness-log-row {
+    grid-template-columns: 1fr;
+  }
+
   .sync-panel {
     grid-column: auto;
   }
@@ -2449,6 +2513,11 @@ h3 {
   }
 
   .workout-action-row {
+    display: grid;
+  }
+
+  .meal-actions,
+  .meal-row-actions {
     display: grid;
   }
 

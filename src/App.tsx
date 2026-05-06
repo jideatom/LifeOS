@@ -16,6 +16,7 @@ import {
   Plus,
   Smartphone,
   TimerReset,
+  Trash2,
   Utensils,
   X,
 } from 'lucide-react'
@@ -32,7 +33,7 @@ import {
   todayIso,
   type FastingPlan,
 } from './data/today'
-import type { FastingSession } from './domain/lifeos'
+import type { FastingSession, MealPlanItem } from './domain/lifeos'
 import { fastingProgress } from './domain/lifeos'
 import './TodayDashboard.css'
 import './App.css'
@@ -49,6 +50,7 @@ const FASTING_HISTORY_STORAGE_KEY = 'lifeos.fastingHistory'
 const WORKOUT_LOG_STORAGE_KEY = 'lifeos.workoutLog'
 const LIFT_PROGRESS_STORAGE_KEY = 'lifeos.liftProgress'
 const RECIPES_STORAGE_KEY = 'lifeos.recipes'
+const MEAL_TIMELINE_STORAGE_KEY = 'lifeos.mealTimeline'
 const TIME_OPTIONS = Array.from({ length: 24 * 12 }, (_, index) => {
   const totalMinutes = index * 5
   const hours = `${Math.floor(totalMinutes / 60)}`.padStart(2, '0')
@@ -247,6 +249,7 @@ type Recipe = {
 }
 
 type RecipeDraft = Omit<Recipe, 'id' | 'source' | 'updatedAt'>
+type MealDraft = Omit<MealPlanItem, 'id'>
 
 type CompletedFastRecord = {
   id: string
@@ -499,6 +502,84 @@ function storedFastingHistoryInitialValue() {
   }
 }
 
+function emptyMealDraft(): MealDraft {
+  return {
+    time: '',
+    title: '',
+    role: 'Main meal',
+    status: 'Flexible',
+    carbSignal: 'Low',
+    items: [],
+    budgetBackup: '',
+  }
+}
+
+function mealItemId() {
+  if (window.crypto.randomUUID) return window.crypto.randomUUID()
+  return `meal-${Date.now()}`
+}
+
+function mealToDraft(meal: MealPlanItem): MealDraft {
+  return {
+    time: meal.time,
+    title: meal.title,
+    role: meal.role,
+    status: meal.status,
+    carbSignal: meal.carbSignal,
+    items: meal.items,
+    budgetBackup: meal.budgetBackup ?? '',
+  }
+}
+
+function isMealStatus(value: string): value is MealPlanItem['status'] {
+  return ['Planned', 'Done', 'Skipped', 'Flexible'].includes(value)
+}
+
+function isMealRole(value: string): value is MealPlanItem['role'] {
+  return ['Break fast', 'Main meal', 'Supper', 'Snack', 'Hydration'].includes(value)
+}
+
+function isMealPlanItem(value: unknown): value is MealPlanItem {
+  if (!value || typeof value !== 'object') return false
+  const meal = value as Partial<MealPlanItem>
+  return Boolean(
+    meal.id &&
+      typeof meal.time === 'string' &&
+      meal.title &&
+      meal.role &&
+      isMealRole(meal.role) &&
+      meal.status &&
+      isMealStatus(meal.status) &&
+      meal.carbSignal &&
+      ['Low', 'Medium', 'Relax'].includes(meal.carbSignal) &&
+      Array.isArray(meal.items),
+  )
+}
+
+function storedMealTimelineInitialValue() {
+  const storedTimeline = window.localStorage.getItem(MEAL_TIMELINE_STORAGE_KEY)
+  if (!storedTimeline) return {} as Record<string, MealPlanItem[]>
+
+  try {
+    const parsed = JSON.parse(storedTimeline) as unknown
+    if (!parsed || typeof parsed !== 'object') return {}
+
+    return Object.entries(parsed as Record<string, unknown>).reduce(
+      (accumulator, [date, meals]) => {
+        if (Array.isArray(meals)) {
+          const validMeals = meals.filter(isMealPlanItem)
+          if (validMeals.length > 0) accumulator[date] = validMeals
+        }
+        return accumulator
+      },
+      {} as Record<string, MealPlanItem[]>,
+    )
+  } catch {
+    window.localStorage.removeItem(MEAL_TIMELINE_STORAGE_KEY)
+    return {}
+  }
+}
+
 function storedWorkoutLogInitialValue() {
   const storedWorkoutLog = window.localStorage.getItem(WORKOUT_LOG_STORAGE_KEY)
   if (!storedWorkoutLog) return [] as WorkoutLogEntry[]
@@ -630,8 +711,11 @@ function App() {
   const [fastingHistory, setFastingHistory] = useState(storedFastingHistoryInitialValue)
   const [workoutLog, setWorkoutLog] = useState(storedWorkoutLogInitialValue)
   const [liftProgress, setLiftProgress] = useState(storedLiftProgressInitialValue)
+  const [mealTimelineByDate, setMealTimelineByDate] = useState(storedMealTimelineInitialValue)
   const [recipeFilter, setRecipeFilter] = useState<(typeof RECIPE_FILTERS)[number]>('All')
   const [recipes, setRecipes] = useState(storedRecipesInitialValue)
+  const [editingMealId, setEditingMealId] = useState<string | null>(null)
+  const [mealDraft, setMealDraft] = useState<MealDraft>(emptyMealDraft)
   const [editingRecipeId, setEditingRecipeId] = useState<string | null>(null)
   const [recipeDraft, setRecipeDraft] = useState<RecipeDraft>(emptyRecipeDraft)
   const [isRecipeSyncing, setIsRecipeSyncing] = useState(false)
@@ -690,6 +774,7 @@ function App() {
   )
   const weekPreview = useMemo(() => getWeekPreview(selectedDate), [selectedDate])
   const { log, meals, workout, syncMetrics, priorities } = todayPlan
+  const displayedMeals = mealTimelineByDate[selectedDate] ?? meals
   const isTodaySelected = selectedDate === todayIso()
   const isLiveFastActive = Boolean(activeFastStartIso && isTodaySelected)
   const fasting = useMemo<FastingSession>(() => {
@@ -927,6 +1012,10 @@ function App() {
     window.localStorage.setItem(LIFT_PROGRESS_STORAGE_KEY, JSON.stringify(liftProgress))
   }, [liftProgress])
 
+  useEffect(() => {
+    window.localStorage.setItem(MEAL_TIMELINE_STORAGE_KEY, JSON.stringify(mealTimelineByDate))
+  }, [mealTimelineByDate])
+
   function handleFastAction() {
     if (isLiveFastActive && activeFastStartIso) {
       const now = new Date()
@@ -1068,6 +1157,65 @@ function App() {
     setEditingRecipeId(recipe?.id ?? 'new')
   }
 
+  function openMealEditor(meal?: MealPlanItem) {
+    setMealDraft(meal ? mealToDraft(meal) : emptyMealDraft())
+    setEditingMealId(meal?.id ?? 'new')
+  }
+
+  function saveMeal() {
+    const nextMeal: MealPlanItem = {
+      id: editingMealId && editingMealId !== 'new' ? editingMealId : mealItemId(),
+      time: mealDraft.time.trim(),
+      title: mealDraft.title.trim(),
+      role: mealDraft.role,
+      status: mealDraft.status,
+      carbSignal: mealDraft.carbSignal,
+      items: mealDraft.items.filter(Boolean),
+      budgetBackup: mealDraft.budgetBackup?.trim() || undefined,
+    }
+
+    if (!nextMeal.title || nextMeal.items.length === 0) return
+
+    setMealTimelineByDate((history) => {
+      const baseMeals = history[selectedDate] ?? displayedMeals
+      const nextMeals =
+        editingMealId && editingMealId !== 'new'
+          ? baseMeals.map((meal) => (meal.id === editingMealId ? nextMeal : meal))
+          : [...baseMeals, nextMeal]
+
+      return {
+        ...history,
+        [selectedDate]: nextMeals,
+      }
+    })
+    setEditingMealId(null)
+  }
+
+  function deleteMeal(mealId: string) {
+    setMealTimelineByDate((history) => {
+      const baseMeals = history[selectedDate] ?? displayedMeals
+      const nextMeals = baseMeals.filter((meal) => meal.id !== mealId)
+      if (nextMeals.length === 0) {
+        const rest = { ...history }
+        delete rest[selectedDate]
+        return rest
+      }
+      return {
+        ...history,
+        [selectedDate]: nextMeals,
+      }
+    })
+  }
+
+  function resetMealsForDate() {
+    setMealTimelineByDate((history) => {
+      const rest = { ...history }
+      delete rest[selectedDate]
+      return rest
+    })
+    setEditingMealId(null)
+  }
+
   async function syncRecipesToNotion(nextRecipes: Recipe[]) {
     if (!NOTION_SYNC_ENDPOINT) {
       setRecipeSyncMessage('Saved locally. Add VITE_LIFEOS_SYNC_API_URL to enable Notion auto-sync.')
@@ -1166,7 +1314,7 @@ function App() {
       role: 'nutrition',
       label: 'Nutrition',
       value: log.nutritionMode,
-      detail: `${meals.length} planned eating decisions`,
+      detail: `${displayedMeals.length} planned eating decisions`,
       trend: 'good',
       targetId: 'nutrition' as const,
     },
@@ -1503,16 +1651,136 @@ function App() {
         </section>
 
         <section className="content-grid">
+          <section className="fitness-log-row">
+            <article id="fitness" className="panel workout-panel">
+              <div className="panel-title">
+                <Dumbbell size={20} aria-hidden="true" />
+                <h2>Training</h2>
+              </div>
+              <div className="workout-status">
+                <span>{workout.status}</span>
+                <strong>{workout.focus}</strong>
+              </div>
+              <div className="workout-stack">
+                <div className="workout-row">
+                  <span>Main work</span>
+                  <ul>
+                    {workout.lifts.map((lift) => (
+                      <li key={lift}>{lift}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="workout-row">
+                  <span>Accessories</span>
+                  <ul>
+                    {workout.accessories.map((accessory) => (
+                      <li key={accessory}>{accessory}</li>
+                    ))}
+                  </ul>
+                  {workout.conditioning ? <p>{workout.conditioning}</p> : null}
+                </div>
+              </div>
+              {mainLiftProgress.length > 0 ? (
+                <div className="lift-progress-grid">
+                  {mainLiftProgress.map((lift) => (
+                    <section className="lift-progress-card" key={lift.label}>
+                      <span>{lift.label}</span>
+                      <strong>{lift.weight} lb</strong>
+                      <p>
+                        Next jump: +{lift.increment} lb after a solid session.
+                        {lift.failures > 0 ? ` Failed attempts: ${lift.failures}.` : ''}
+                      </p>
+                      <div className="lift-progress-actions">
+                        <button type="button" onClick={() => adjustLiftProgress(lift.label, lift.weight - lift.increment)}>
+                          -{lift.increment}
+                        </button>
+                        <button type="button" onClick={() => logLiftSuccess(lift.label)}>
+                          Hit it
+                        </button>
+                        <button type="button" onClick={() => adjustLiftProgress(lift.label, lift.weight + lift.increment)}>
+                          +{lift.increment}
+                        </button>
+                      </div>
+                      <div className="lift-progress-actions secondary-actions">
+                        <button type="button" onClick={() => logLiftFailure(lift.label)}>
+                          Missed rep
+                        </button>
+                        <button type="button" onClick={() => deloadLift(lift.label)}>
+                          Deload 10%
+                        </button>
+                      </div>
+                    </section>
+                  ))}
+                </div>
+              ) : null}
+              <div className="workout-action-row">
+                <button type="button" className="workout-primary-button" onClick={() => toggleWorkoutLog('Done')}>
+                  {loggedWorkoutForSelectedDay?.status === 'Done' ? 'Undo workout log' : 'Mark workout done'}
+                </button>
+                <button type="button" className="workout-secondary-button" onClick={() => toggleWorkoutLog('Skipped')}>
+                  Mark skipped
+                </button>
+              </div>
+              <p className="workout-log-note">
+                {loggedWorkoutForSelectedDay
+                  ? `${loggedWorkoutForSelectedDay.status} on ${relativeDateLabel(loggedWorkoutForSelectedDay.date, selectedDate)} for ${loggedWorkoutForSelectedDay.plan}.`
+                  : 'No training log saved yet for this day.'}
+              </p>
+            </article>
+
+            <article className="panel compact-panel workout-log-panel">
+              <div className="panel-title">
+                <CircleCheck size={20} aria-hidden="true" />
+                <h2>Workout Log</h2>
+              </div>
+              <div className="workout-log-stats">
+                <section>
+                  <span>This week</span>
+                  <strong>{workoutStats.weeklyCompletions}</strong>
+                </section>
+                <section>
+                  <span>Total logged</span>
+                  <strong>{workoutStats.totalSessions}</strong>
+                </section>
+              </div>
+              <div className="workout-log-list">
+                {workoutStats.recentSessions.length > 0 ? (
+                  workoutStats.recentSessions.map((entry) => (
+                    <article className="workout-log-entry" key={entry.id}>
+                      <span>{relativeDateLabel(entry.date, selectedDate)}</span>
+                      <strong>{entry.plan}</strong>
+                      <p>{entry.focus}</p>
+                    </article>
+                  ))
+                ) : (
+                  <p className="muted">Your recent completed training sessions will appear here.</p>
+                )}
+              </div>
+            </article>
+          </section>
+
           <article id="meals" className="panel meals-panel">
             <div className="panel-title">
               <Apple size={20} aria-hidden="true" />
               <h2>Meal Timeline</h2>
             </div>
+            <div className="meal-actions">
+              <button type="button" onClick={() => openMealEditor()}>
+                <Plus size={16} aria-hidden="true" />
+                Add meal slot
+              </button>
+              <button type="button" onClick={resetMealsForDate} disabled={!mealTimelineByDate[selectedDate]}>
+                Reset this day
+              </button>
+            </div>
+            <p className="meal-timeline-note">
+              This timeline is editable per day, so your fast can break in the morning, afternoon, or night depending on the plan.
+            </p>
             <div className="meal-stack">
-              {meals.map((meal) => (
+              {displayedMeals.map((meal) => (
                 <section className={`meal-row carb-${meal.carbSignal.toLowerCase()}`} key={meal.id}>
                   <div className="meal-time">
-                    <strong>{meal.time}</strong>
+                    <strong>{meal.time || 'Flexible'}</strong>
                     <span>{meal.role}</span>
                   </div>
                   <div>
@@ -1522,115 +1790,19 @@ function App() {
                     </div>
                     <p>{meal.items.join(', ')}</p>
                     {meal.budgetBackup ? <small>{meal.budgetBackup}</small> : null}
+                    <div className="meal-row-actions">
+                      <button type="button" onClick={() => openMealEditor(meal)}>
+                        <Pencil size={14} aria-hidden="true" />
+                        Edit
+                      </button>
+                      <button type="button" onClick={() => deleteMeal(meal.id)}>
+                        <Trash2 size={14} aria-hidden="true" />
+                        Remove
+                      </button>
+                    </div>
                   </div>
                 </section>
               ))}
-            </div>
-          </article>
-
-          <article id="fitness" className="panel workout-panel">
-            <div className="panel-title">
-              <Dumbbell size={20} aria-hidden="true" />
-              <h2>Training</h2>
-            </div>
-            <div className="workout-status">
-              <span>{workout.status}</span>
-              <strong>{workout.focus}</strong>
-            </div>
-            <div className="workout-stack">
-              <div className="workout-row">
-                <span>Main work</span>
-                <ul>
-                  {workout.lifts.map((lift) => (
-                    <li key={lift}>{lift}</li>
-                  ))}
-                </ul>
-              </div>
-              <div className="workout-row">
-                <span>Accessories</span>
-                <ul>
-                  {workout.accessories.map((accessory) => (
-                    <li key={accessory}>{accessory}</li>
-                  ))}
-                </ul>
-                {workout.conditioning ? <p>{workout.conditioning}</p> : null}
-              </div>
-            </div>
-            {mainLiftProgress.length > 0 ? (
-              <div className="lift-progress-grid">
-                {mainLiftProgress.map((lift) => (
-                  <section className="lift-progress-card" key={lift.label}>
-                    <span>{lift.label}</span>
-                    <strong>{lift.weight} lb</strong>
-                    <p>
-                      Next jump: +{lift.increment} lb after a solid session.
-                      {lift.failures > 0 ? ` Failed attempts: ${lift.failures}.` : ''}
-                    </p>
-                    <div className="lift-progress-actions">
-                      <button type="button" onClick={() => adjustLiftProgress(lift.label, lift.weight - lift.increment)}>
-                        -{lift.increment}
-                      </button>
-                      <button type="button" onClick={() => logLiftSuccess(lift.label)}>
-                        Hit it
-                      </button>
-                      <button type="button" onClick={() => adjustLiftProgress(lift.label, lift.weight + lift.increment)}>
-                        +{lift.increment}
-                      </button>
-                    </div>
-                    <div className="lift-progress-actions secondary-actions">
-                      <button type="button" onClick={() => logLiftFailure(lift.label)}>
-                        Missed rep
-                      </button>
-                      <button type="button" onClick={() => deloadLift(lift.label)}>
-                        Deload 10%
-                      </button>
-                    </div>
-                  </section>
-                ))}
-              </div>
-            ) : null}
-            <div className="workout-action-row">
-              <button type="button" className="workout-primary-button" onClick={() => toggleWorkoutLog('Done')}>
-                {loggedWorkoutForSelectedDay?.status === 'Done' ? 'Undo workout log' : 'Mark workout done'}
-              </button>
-              <button type="button" className="workout-secondary-button" onClick={() => toggleWorkoutLog('Skipped')}>
-                Mark skipped
-              </button>
-            </div>
-            <p className="workout-log-note">
-              {loggedWorkoutForSelectedDay
-                ? `${loggedWorkoutForSelectedDay.status} on ${relativeDateLabel(loggedWorkoutForSelectedDay.date, selectedDate)} for ${loggedWorkoutForSelectedDay.plan}.`
-                : 'No training log saved yet for this day.'}
-            </p>
-          </article>
-
-          <article className="panel compact-panel workout-log-panel">
-            <div className="panel-title">
-              <CircleCheck size={20} aria-hidden="true" />
-              <h2>Workout Log</h2>
-            </div>
-            <div className="workout-log-stats">
-              <section>
-                <span>This week</span>
-                <strong>{workoutStats.weeklyCompletions}</strong>
-              </section>
-              <section>
-                <span>Total logged</span>
-                <strong>{workoutStats.totalSessions}</strong>
-              </section>
-            </div>
-            <div className="workout-log-list">
-              {workoutStats.recentSessions.length > 0 ? (
-                workoutStats.recentSessions.map((entry) => (
-                  <article className="workout-log-entry" key={entry.id}>
-                    <span>{relativeDateLabel(entry.date, selectedDate)}</span>
-                    <strong>{entry.plan}</strong>
-                    <p>{entry.focus}</p>
-                  </article>
-                ))
-              ) : (
-                <p className="muted">Your recent completed training sessions will appear here.</p>
-              )}
             </div>
           </article>
 
@@ -2020,6 +2192,134 @@ function App() {
           </article>
         </section>
       </section>
+
+      {editingMealId ? (
+        <section className="recipe-editor-backdrop" aria-label="Meal timeline editor">
+          <form
+            className="recipe-editor-sheet meal-editor-sheet"
+            onSubmit={(event) => {
+              event.preventDefault()
+              saveMeal()
+            }}
+          >
+            <header className="recipe-editor-header">
+              <div>
+                <span className="eyebrow">{editingMealId === 'new' ? 'Meal slot' : 'Edit meal slot'}</span>
+                <h2>{editingMealId === 'new' ? 'Add meal timeline slot' : 'Update meal timeline slot'}</h2>
+              </div>
+              <button type="button" onClick={() => setEditingMealId(null)} aria-label="Close meal editor">
+                <X size={20} aria-hidden="true" />
+              </button>
+            </header>
+
+            <div className="recipe-editor-grid">
+              <label>
+                Time
+                <input
+                  value={mealDraft.time}
+                  onChange={(event) => setMealDraft((draft) => ({ ...draft, time: event.target.value }))}
+                  placeholder="07:30 or Flexible"
+                />
+              </label>
+              <label>
+                Role
+                <select
+                  value={mealDraft.role}
+                  onChange={(event) =>
+                    setMealDraft((draft) => ({
+                      ...draft,
+                      role: event.target.value as MealPlanItem['role'],
+                    }))
+                  }
+                >
+                  {['Break fast', 'Main meal', 'Supper', 'Snack', 'Hydration'].map((role) => (
+                    <option value={role} key={role}>
+                      {role}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Status
+                <select
+                  value={mealDraft.status}
+                  onChange={(event) =>
+                    setMealDraft((draft) => ({
+                      ...draft,
+                      status: event.target.value as MealPlanItem['status'],
+                    }))
+                  }
+                >
+                  {['Flexible', 'Planned', 'Done', 'Skipped'].map((status) => (
+                    <option value={status} key={status}>
+                      {status}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Carb signal
+                <select
+                  value={mealDraft.carbSignal}
+                  onChange={(event) =>
+                    setMealDraft((draft) => ({
+                      ...draft,
+                      carbSignal: event.target.value as MealPlanItem['carbSignal'],
+                    }))
+                  }
+                >
+                  {RECIPE_CARB_SIGNALS.map((signal) => (
+                    <option value={signal} key={signal}>
+                      {signal}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="recipe-editor-wide">
+                Title
+                <input
+                  value={mealDraft.title}
+                  onChange={(event) => setMealDraft((draft) => ({ ...draft, title: event.target.value }))}
+                  placeholder="Example: Afternoon break-fast bowl"
+                  required
+                />
+              </label>
+              <label className="recipe-editor-wide">
+                Meal items
+                <textarea
+                  value={mealDraft.items.join(', ')}
+                  onChange={(event) =>
+                    setMealDraft((draft) => ({
+                      ...draft,
+                      items: event.target.value
+                        .split(',')
+                        .map((item) => item.trim())
+                        .filter(Boolean),
+                    }))
+                  }
+                  placeholder="Eggs, avocado, cucumber, okro soup"
+                  required
+                />
+              </label>
+              <label className="recipe-editor-wide">
+                Budget backup / note
+                <textarea
+                  value={mealDraft.budgetBackup ?? ''}
+                  onChange={(event) => setMealDraft((draft) => ({ ...draft, budgetBackup: event.target.value }))}
+                  placeholder="Fallback or note for this meal slot"
+                />
+              </label>
+            </div>
+
+            <div className="recipe-editor-actions">
+              <button type="button" onClick={() => setEditingMealId(null)}>
+                Cancel
+              </button>
+              <button type="submit">Save meal slot</button>
+            </div>
+          </form>
+        </section>
+      ) : null}
 
       {editingRecipeId ? (
         <section className="recipe-editor-backdrop" aria-label="Recipe editor">
