@@ -254,18 +254,19 @@ type LiftProgressEntry = {
   label: string
   weight: number
   increment: number
+  failures: number
   updatedAtIso: string
 }
 
 type SignalCardTarget = 'day-overview' | 'nutrition' | 'fitness' | 'sync'
 
 const DEFAULT_LIFT_PROGRESS: Record<string, LiftProgressEntry> = {
-  'Back Squat 5x5': { label: 'Back Squat 5x5', weight: 135, increment: 5, updatedAtIso: '2026-05-06T00:00:00.000Z' },
-  'Bench Press 5x5': { label: 'Bench Press 5x5', weight: 95, increment: 5, updatedAtIso: '2026-05-06T00:00:00.000Z' },
-  'Barbell Row 5x5': { label: 'Barbell Row 5x5', weight: 95, increment: 5, updatedAtIso: '2026-05-06T00:00:00.000Z' },
-  'Overhead Press 5x5': { label: 'Overhead Press 5x5', weight: 65, increment: 5, updatedAtIso: '2026-05-06T00:00:00.000Z' },
-  'Deadlift 1x5 or Trap Bar 3x3-5': { label: 'Deadlift 1x5 or Trap Bar 3x3-5', weight: 185, increment: 10, updatedAtIso: '2026-05-06T00:00:00.000Z' },
-  'Trap Bar Deadlift 3x3-5': { label: 'Trap Bar Deadlift 3x3-5', weight: 185, increment: 10, updatedAtIso: '2026-05-06T00:00:00.000Z' },
+  'Back Squat 5x5': { label: 'Back Squat 5x5', weight: 135, increment: 5, failures: 0, updatedAtIso: '2026-05-06T00:00:00.000Z' },
+  'Bench Press 5x5': { label: 'Bench Press 5x5', weight: 95, increment: 5, failures: 0, updatedAtIso: '2026-05-06T00:00:00.000Z' },
+  'Barbell Row 5x5': { label: 'Barbell Row 5x5', weight: 95, increment: 5, failures: 0, updatedAtIso: '2026-05-06T00:00:00.000Z' },
+  'Overhead Press 5x5': { label: 'Overhead Press 5x5', weight: 65, increment: 5, failures: 0, updatedAtIso: '2026-05-06T00:00:00.000Z' },
+  'Deadlift 1x5 or Trap Bar 3x3-5': { label: 'Deadlift 1x5 or Trap Bar 3x3-5', weight: 185, increment: 10, failures: 0, updatedAtIso: '2026-05-06T00:00:00.000Z' },
+  'Trap Bar Deadlift 3x3-5': { label: 'Trap Bar Deadlift 3x3-5', weight: 185, increment: 10, failures: 0, updatedAtIso: '2026-05-06T00:00:00.000Z' },
 }
 
 const recipeLibrary: Recipe[] = [
@@ -510,7 +511,13 @@ function storedWorkoutLogInitialValue() {
 function isLiftProgressEntry(value: unknown): value is LiftProgressEntry {
   if (!value || typeof value !== 'object') return false
   const entry = value as Partial<LiftProgressEntry>
-  return Boolean(entry.label && typeof entry.weight === 'number' && typeof entry.increment === 'number' && entry.updatedAtIso)
+  return Boolean(
+    entry.label &&
+      typeof entry.weight === 'number' &&
+      typeof entry.increment === 'number' &&
+      typeof entry.failures === 'number' &&
+      entry.updatedAtIso,
+  )
 }
 
 function storedLiftProgressInitialValue() {
@@ -927,7 +934,43 @@ function App() {
   function logLiftSuccess(label: string) {
     const current = liftProgress[label] ?? DEFAULT_LIFT_PROGRESS[label]
     if (!current) return
-    adjustLiftProgress(label, current.weight + current.increment)
+    setLiftProgress((history) => ({
+      ...history,
+      [label]: {
+        ...current,
+        weight: current.weight + current.increment,
+        failures: 0,
+        updatedAtIso: new Date().toISOString(),
+      },
+    }))
+  }
+
+  function logLiftFailure(label: string) {
+    const current = liftProgress[label] ?? DEFAULT_LIFT_PROGRESS[label]
+    if (!current) return
+    setLiftProgress((history) => ({
+      ...history,
+      [label]: {
+        ...current,
+        failures: Math.min(3, current.failures + 1),
+        updatedAtIso: new Date().toISOString(),
+      },
+    }))
+  }
+
+  function deloadLift(label: string) {
+    const current = liftProgress[label] ?? DEFAULT_LIFT_PROGRESS[label]
+    if (!current) return
+    const deloadedWeight = Math.max(45, Math.round((current.weight * 0.9) / 5) * 5)
+    setLiftProgress((history) => ({
+      ...history,
+      [label]: {
+        ...current,
+        weight: deloadedWeight,
+        failures: 0,
+        updatedAtIso: new Date().toISOString(),
+      },
+    }))
   }
 
   function openTimeEditor(field: 'start' | 'end') {
@@ -1445,7 +1488,10 @@ function App() {
                   <section className="lift-progress-card" key={lift.label}>
                     <span>{lift.label}</span>
                     <strong>{lift.weight} lb</strong>
-                    <p>Next jump: +{lift.increment} lb after a solid session.</p>
+                    <p>
+                      Next jump: +{lift.increment} lb after a solid session.
+                      {lift.failures > 0 ? ` Failed attempts: ${lift.failures}.` : ''}
+                    </p>
                     <div className="lift-progress-actions">
                       <button type="button" onClick={() => adjustLiftProgress(lift.label, lift.weight - lift.increment)}>
                         -{lift.increment}
@@ -1455,6 +1501,14 @@ function App() {
                       </button>
                       <button type="button" onClick={() => adjustLiftProgress(lift.label, lift.weight + lift.increment)}>
                         +{lift.increment}
+                      </button>
+                    </div>
+                    <div className="lift-progress-actions secondary-actions">
+                      <button type="button" onClick={() => logLiftFailure(lift.label)}>
+                        Missed rep
+                      </button>
+                      <button type="button" onClick={() => deloadLift(lift.label)}>
+                        Deload 10%
                       </button>
                     </div>
                   </section>
