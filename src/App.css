@@ -1211,6 +1211,46 @@ h3 {
   margin-top: 16px;
 }
 
+.fasting-trend-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.fasting-trend-card,
+.protocol-breakdown-entry {
+  padding: 12px;
+  border: 1px solid rgba(23, 32, 29, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 253, 248, 0.88);
+}
+
+.fasting-trend-card strong,
+.protocol-breakdown-entry strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 24px;
+  color: #17201d;
+}
+
+.fasting-trend-card p {
+  margin-top: 6px;
+  color: #56655f;
+  line-height: 1.45;
+}
+
+.protocol-breakdown-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.protocol-breakdown-entry {
+  border-left: 5px solid rgba(27, 94, 89, 0.42);
+}
+
 .workout-log-entry,
 .fasting-record-entry {
   display: grid;
@@ -2256,7 +2296,9 @@ h3 {
   .health-connect-steps,
   .workout-log-stats,
   .fasting-records-stats,
-  .lift-progress-grid {
+  .lift-progress-grid,
+  .fasting-trend-grid,
+  .protocol-breakdown-list {
     grid-template-columns: 1fr;
   }
 

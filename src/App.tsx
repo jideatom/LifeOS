@@ -737,14 +737,32 @@ function App() {
       completedSessions > 0
         ? fastingHistory.reduce((sum, session) => sum + session.actualHours, 0) / completedSessions
         : 0
+    const currentWeekDates = Array.from({ length: 7 }, (_, index) => shiftDate(selectedDate, -index))
+    const weeklySessions = fastingHistory.filter((session) => currentWeekDates.includes(session.completedOn)).length
+    const currentMonthPrefix = selectedDate.slice(0, 7)
+    const monthlySessions = fastingHistory.filter((session) => session.completedOn.startsWith(currentMonthPrefix)).length
+    const protocolBreakdown = Object.entries(
+      fastingHistory.reduce(
+        (breakdown, session) => ({
+          ...breakdown,
+          [session.protocol]: (breakdown[session.protocol] ?? 0) + 1,
+        }),
+        {} as Record<string, number>,
+      ),
+    )
+      .sort((left, right) => right[1] - left[1])
+      .slice(0, 4)
 
     return {
       completedSessions,
       fastingDays,
       longestFast,
       averageFast,
+      weeklySessions,
+      monthlySessions,
+      protocolBreakdown,
     }
-  }, [fastingHistory])
+  }, [fastingHistory, selectedDate])
   const workoutStats = useMemo(() => {
     const completedSessions = workoutLog.filter((entry) => entry.status === 'Done')
     const currentWeekDates = Array.from({ length: 7 }, (_, index) => shiftDate(selectedDate, -index))
@@ -1685,6 +1703,30 @@ function App() {
                 <span>Completed</span>
                 <strong>{fastingStats.completedSessions}</strong>
               </section>
+            </div>
+            <div className="fasting-trend-grid">
+              <section className="fasting-trend-card">
+                <span>This week</span>
+                <strong>{fastingStats.weeklySessions}</strong>
+                <p>Completed fasts across the last 7 days.</p>
+              </section>
+              <section className="fasting-trend-card">
+                <span>This month</span>
+                <strong>{fastingStats.monthlySessions}</strong>
+                <p>Completed fasts in the current month.</p>
+              </section>
+            </div>
+            <div className="protocol-breakdown-list">
+              {fastingStats.protocolBreakdown.length > 0 ? (
+                fastingStats.protocolBreakdown.map(([protocol, count]) => (
+                  <article className="protocol-breakdown-entry" key={protocol}>
+                    <span>{protocol}</span>
+                    <strong>{count}</strong>
+                  </article>
+                ))
+              ) : (
+                <p className="muted">Protocol mix will appear once you complete a few fasts.</p>
+              )}
             </div>
             <div className="fasting-record-list">
               {fastingHistory.slice(0, 4).map((entry) => (
