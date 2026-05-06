@@ -2197,3 +2197,13 @@ h3 {
     min-height: 116px;
   }
 }
+
+
+/* Flexible meal time placeholder */
+.meal-time-flex {
+  font-style: italic;
+  color: var(--text-muted, #8a9bac);
+  font-size: 0.78rem;
+  font-weight: 400;
+  opacity: 0.8;
+}

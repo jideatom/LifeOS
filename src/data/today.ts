@@ -297,80 +297,40 @@ function fastingPhasesForSession(session: FastingSession): FastingPhase[] {
 
 function mealsForDate(dateIso: string): MealPlanItem[] {
   if (isRelaxDay(dateIso)) {
-    return [
-      {
-        id: 'break-fast',
-        time: '11:00',
-        title: 'Eggs, avocado and sauteed greens',
-        role: 'Break fast',
-        status: 'Planned',
-        carbSignal: 'Low',
-        items: ['Eggs', 'Avocado', 'Ugu or spinach', 'Olive oil or small butter'],
-        budgetBackup: 'Eggs plus cabbage stir-fry if avocado price is high.',
-      },
-      {
-        id: 'main-meal',
-        time: '15:00',
-        title: 'Alaran soup bowl with cauliflower rice',
-        role: 'Main meal',
-        status: 'Planned',
-        carbSignal: 'Low',
-        items: ['Alaran/mackerel', 'Soup: efo riro, okro or egusi without crayfish', 'Cauliflower rice', 'Cucumber'],
-        budgetBackup: 'Swap fish for eggs, gizzard or turkey offcuts when fish price jumps.',
-      },
-      {
-        id: 'relax-snack',
-        time: '17:30',
-        title: 'Seasonal controlled snack',
-        role: 'Snack',
-        status: 'Flexible',
-        carbSignal: 'Relax',
-        items: ['Small mango portion', 'Local walnut', 'Water'],
-        budgetBackup: 'Use local walnut only if mango pushes cravings.',
-      },
-      {
-        id: 'supper',
-        time: '19:30',
-        title: 'Pepper stew with croaker and cabbage rice',
-        role: 'Supper',
-        status: 'Planned',
-        carbSignal: 'Low',
-        items: ['Croaker', 'Pepper stew', 'Cabbage rice', 'Side vegetables'],
-        budgetBackup: 'Use alaran, eggs or grilled chicken instead of croaker.',
-      },
-    ]
+return [
+    {
+      id: 'first-meal',
+      time: '',
+      title: 'First meal – flexible',
+      role: 'Break fast',
+      status: 'Flexible',
+      carbSignal: 'Low',
+      items: ['Eggs, plain yogurt or avocado', 'Cucumber, ugu or spinach', 'Water'],
+      budgetBackup: 'Eggs plus cabbage stir-fry if avocado is expensive.',
+    },
+    {
+      id: 'dinner',
+      time: '',
+      title: 'Dinner – Yoruba relax supper',
+      role: 'Supper',
+      status: 'Flexible',
+      carbSignal: 'Relax',
+      items: ['Amala + ewedu + obe ata (small portion)', 'OR Ofada rice + ayamase (half cauliflower rice)', 'OR Ewa agoyin + extra eggs or gizzard', 'Protein: alaran, croaker, chicken, gizzard or eggs'],
+      budgetBackup: 'Use cabbage rice with efo riro when budget is tight.',
+    },
+  ]
   }
 
-  return [
+return [
     {
-      id: 'break-fast',
-      time: '12:00',
-      title: 'Protein-first fast breaker',
-      role: 'Break fast',
-      status: 'Planned',
-      carbSignal: 'Low',
-      items: ['Boiled eggs', 'Avocado or groundnut', 'Cucumber', 'Water'],
-      budgetBackup: 'Eggs plus groundnut when avocado is expensive.',
-    },
-    {
-      id: 'main-meal',
-      time: '15:30',
-      title: 'Soup bowl, no swallow default',
-      role: 'Main meal',
-      status: 'Planned',
-      carbSignal: 'Low',
-      items: ['Soup: ewedu, efo riro, okro or egusi', 'Alaran or gizzard', 'Cabbage swallow', 'Pepper stew'],
-      budgetBackup: 'Use eggs, chicken laps or gizzard when fish price is high.',
-    },
-    {
-      id: 'supper',
-      time: '19:15',
-      title: 'Pepper stew with low-carb rice swap',
+      id: 'dinner',
+      time: '',
+      title: 'OMAD Dinner – Yoruba low-carb supper',
       role: 'Supper',
-      status: 'Planned',
+      status: 'Flexible',
       carbSignal: 'Low',
-      items: ['Pepper stew', 'Cauliflower rice or cabbage rice', 'Eggs or mackerel', 'Vegetables'],
-      budgetBackup: 'Cabbage rice is the default backup if cauliflower is unavailable.',
+      items: ['Soup: efo riro, ewedu, ila alasepo or okra', 'Protein: alaran, croaker, gizzard or eggs', 'Cabbage swallow or cauliflower rice (no regular swallow)', 'Extra vegetables'],
+      budgetBackup: 'Eggs or gizzard when fish is unavailable. Cabbage rice as default low-carb base.',
     },
   ]
 }
