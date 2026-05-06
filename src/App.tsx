@@ -645,8 +645,6 @@ function App() {
       averageFast,
     }
   }, [fastingHistory])
-  const localPreviewBlocksSync =
-    typeof window !== 'undefined' && /^(http:\/\/127\.0\.0\.1|http:\/\/localhost)/i.test(window.location.origin)
   const nutritionRules = [
     {
       label: 'Plate rule',
@@ -777,11 +775,6 @@ function App() {
       return
     }
 
-    if (localPreviewBlocksSync) {
-      setRecipeSyncMessage('Local preview is blocked by Vercel CORS. Use the published site or allow localhost in the sync bridge.')
-      return
-    }
-
     setIsRecipeSyncing(true)
     setRecipeSyncMessage('Syncing recipes to Notion...')
 
@@ -847,11 +840,7 @@ function App() {
     })()
 
     setRecipes(nextRecipes)
-    setRecipeSyncMessage(
-      localPreviewBlocksSync
-        ? 'Saved locally. Recipe sync needs the published site or a localhost-safe bridge.'
-        : 'Saved locally. Sending recipe to Notion.',
-    )
+    setRecipeSyncMessage('Saved locally. Sending recipe to Notion.')
     setEditingRecipeId(null)
     void syncRecipesToNotion(nextRecipes)
   }
@@ -1286,11 +1275,7 @@ function App() {
             <p className="recipes-intro">
               Low-carb meals first, medium-carb meals controlled, relax foods clearly marked.
             </p>
-            <p className="recipe-sync-note">
-              {localPreviewBlocksSync
-                ? 'Notion sync is blocked on local preview because the Vercel bridge only allows https://misimisys.github.io right now.'
-                : recipeSyncMessage}
-            </p>
+            <p className="recipe-sync-note">{recipeSyncMessage}</p>
             <div className="recipe-action-row">
               <button type="button" onClick={() => openRecipeEditor()}>
                 <Plus size={16} aria-hidden="true" />
@@ -1381,16 +1366,14 @@ function App() {
             <div className="sync-summary">
               <section className="sync-summary-card">
                 <span>Bridge status</span>
-                <strong>{localPreviewBlocksSync ? 'Local preview blocked' : 'Bridge ready'}</strong>
+                <strong>Bridge needs env check</strong>
                 <p>
-                  {localPreviewBlocksSync
-                    ? 'The deployed bridge only allows the published site, not 127.0.0.1.'
-                    : 'Fitbit to Health Connect can stage here once the import bridge is built.'}
+                  Recipe sync depends on the Vercel API route plus valid Notion secrets and allowed origins.
                 </p>
               </section>
               <section className="sync-summary-card">
                 <span>Recipe sync</span>
-                <strong>{localPreviewBlocksSync ? 'Use published site' : 'Ready to test'}</strong>
+                <strong>Ready to retest</strong>
                 <p>Current target is the LifeOS Recipes Notion database through the Vercel API bridge.</p>
               </section>
             </div>
