@@ -1555,38 +1555,96 @@ function App() {
     }
   }
 
+  const mealToneBreakdown = useMemo(
+    () =>
+      displayedMeals.reduce(
+        (summary, meal) => ({
+          ...summary,
+          [meal.carbSignal.toLowerCase()]: summary[meal.carbSignal.toLowerCase() as 'low' | 'medium' | 'relax'] + 1,
+        }),
+        { low: 0, medium: 0, relax: 0 },
+      ),
+    [displayedMeals],
+  )
+  const nextMealSlot = displayedMeals[0]
+  const topRecipeCount = recipes.filter((recipe) => recipe.carbSignal === 'Low').length
+  const syncStatusLabel = hasSupabaseConfig ? 'Cloud live' : 'Local only'
+  const sleepHours = log.sleepHours ?? 0
+  const sleepScore = log.sleepScore ?? 0
+  const restingHeartRate = log.restingHeartRate ?? 0
+  const sleepMetric = syncMetrics.find((metric) => metric.label === 'Sleep')
+  const stepsMetric = syncMetrics.find((metric) => metric.label === 'Steps')
+  const zoneMetric = syncMetrics.find((metric) => metric.label === 'Zone mins')
+  const restingHrMetric = syncMetrics.find((metric) => metric.label === 'Resting HR')
+
   const commandSignals = [
     {
       role: 'day',
-      label: 'Day type',
-      value: log.dayType,
-      detail: `${log.day}, ${log.date}`,
-      trend: log.dayType === 'Relax' ? 'watch' : 'good',
+      label: 'Recovery',
+      value: readinessLabel(log.readiness),
+      detail: `${log.dayType} day with ${sleepHours.toFixed(1)}h sleep and ${sleepScore} sleep score.`,
+      trend: log.readiness === 'Red' ? 'watch' : log.readiness === 'Yellow' ? 'neutral' : 'good',
       targetId: 'day-overview' as const,
+      eyebrow: log.readiness,
+      metrics: [
+        { label: 'Sleep', value: `${sleepHours.toFixed(1)}h` },
+        { label: 'Score', value: `${sleepScore}` },
+        { label: 'RHR', value: `${restingHeartRate}` },
+      ],
+      cta: priorities[0],
     },
     {
       role: 'nutrition',
       label: 'Nutrition',
       value: log.nutritionMode,
-      detail: `${displayedMeals.length} planned eating decisions`,
-      trend: 'good',
+      detail:
+        nextMealSlot != null
+          ? `${nextMealSlot.time || 'Flexible'} ${nextMealSlot.title}`
+          : 'No meal slots set yet for this day.',
+      trend: mealToneBreakdown.relax > 0 ? 'watch' : 'good',
       targetId: 'nutrition' as const,
+      eyebrow: `${displayedMeals.length} eating decisions`,
+      metrics: [
+        { label: 'Low', value: `${mealToneBreakdown.low}` },
+        { label: 'Medium', value: `${mealToneBreakdown.medium}` },
+        { label: 'Recipes', value: `${topRecipeCount}` },
+      ],
+      cta: 'Protein first, soup or stew, then a low-carb vehicle.',
     },
     {
       role: 'training',
-      label: 'Workout',
+      label: 'Training',
       value: workout.plan,
       detail: workout.focus,
       trend: workout.status === 'Optional' ? 'neutral' : 'good',
       targetId: 'fitness' as const,
+      eyebrow: loggedWorkoutForSelectedDay?.status ?? workout.status,
+      metrics: [
+        { label: 'Main lifts', value: `${workout.lifts.length}` },
+        { label: 'Accessories', value: `${workout.accessories.length}` },
+        { label: 'Logged', value: loggedWorkoutForSelectedDay?.status === 'Done' ? 'Yes' : 'No' },
+      ],
+      cta:
+        log.readiness === 'Green'
+          ? 'Load can move today.'
+          : log.readiness === 'Yellow'
+            ? 'Keep form tight and hold load if needed.'
+            : 'Recovery first. Technique or conditioning is enough.',
     },
     {
       role: 'sync',
-      label: 'Sync',
-      value: 'Health Connect',
-      detail: `${syncMetrics.length} Fitbit signals staged`,
-      trend: 'watch',
+      label: 'Readiness signals',
+      value: syncStatusLabel,
+      detail: `${syncMetrics.length} Fitbit and Health Connect markers feeding the daily view.`,
+      trend: hasSupabaseConfig ? 'good' : 'watch',
       targetId: 'sync' as const,
+      eyebrow: 'Fitbit / Health Connect',
+      metrics: [
+        { label: 'Sleep', value: sleepMetric ? `${sleepMetric.value}${sleepMetric.unit ?? ''}` : '--' },
+        { label: 'Steps', value: stepsMetric?.value ?? '--' },
+        { label: 'Zone', value: zoneMetric?.value ?? '--' },
+      ],
+      cta: restingHrMetric ? `Resting HR is ${restingHrMetric.value}${restingHrMetric.unit ?? ''}.` : 'Health signals will stage here.',
     },
   ] as const
 
@@ -1899,7 +1957,7 @@ function App() {
             </div> : null}
           </article>
 
-          <div className="signal-grid">
+          <div className="signal-grid" aria-label="Daily command dashboard">
             {commandSignals.map((signal) => (
               <button
                 className={`signal-card signal-card-button signal-${signal.trend} signal-role-${signal.role}`}
@@ -1907,9 +1965,24 @@ function App() {
                 type="button"
                 onClick={() => jumpToSection(signal.targetId)}
               >
-                <span>{signal.label}</span>
+                <div className="signal-card-head">
+                  <span>{signal.label}</span>
+                  <small>{signal.eyebrow}</small>
+                </div>
                 <strong>{signal.value}</strong>
                 <p>{signal.detail}</p>
+                <div className="signal-metric-row">
+                  {signal.metrics.map((metric) => (
+                    <div className="signal-metric-chip" key={`${signal.label}-${metric.label}`}>
+                      <small>{metric.label}</small>
+                      <span>{metric.value}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="signal-card-footer">
+                  <small>{signal.cta}</small>
+                  <ChevronRight size={16} aria-hidden="true" />
+                </div>
               </button>
             ))}
           </div>
