@@ -1,5 +1,6 @@
 import {
   Apple,
+  Award,
   BookOpen,
   CalendarDays,
   CheckCircle2,
@@ -8,6 +9,7 @@ import {
   Database,
   Dumbbell,
   ExternalLink,
+  Flag,
   Flame,
   Gauge,
   HeartPulse,
@@ -16,6 +18,7 @@ import {
   Plus,
   Smartphone,
   TimerReset,
+  Trophy,
   Trash2,
   Utensils,
   X,
@@ -63,6 +66,7 @@ const WORKOUT_LOG_STORAGE_KEY = 'lifeos.workoutLog'
 const LIFT_PROGRESS_STORAGE_KEY = 'lifeos.liftProgress'
 const RECIPES_STORAGE_KEY = 'lifeos.recipes'
 const MEAL_TIMELINE_STORAGE_KEY = 'lifeos.mealTimeline'
+const ACTIVE_CHALLENGE_STORAGE_KEY = 'lifeos.activeChallenge'
 const TIME_OPTIONS = Array.from({ length: 24 * 12 }, (_, index) => {
   const totalMinutes = index * 5
   const hours = `${Math.floor(totalMinutes / 60)}`.padStart(2, '0')
@@ -303,6 +307,32 @@ function planTone(level: FastingPlan['level']) {
   return 'mint'
 }
 
+function challengeTone(accent: ChallengeDefinition['accent']) {
+  if (accent === 'sun') return 'sun'
+  if (accent === 'coral') return 'coral'
+  return 'mint'
+}
+
+function dateIsoToAnchor(dateIso: string) {
+  return new Date(`${dateIso}T12:00:00`)
+}
+
+function challengeStateInitialValue() {
+  const stored = window.localStorage.getItem(ACTIVE_CHALLENGE_STORAGE_KEY)
+  if (!stored) return null as ActiveChallengeState | null
+
+  try {
+    const parsed = JSON.parse(stored) as Partial<ActiveChallengeState>
+    if (typeof parsed.challengeId === 'string' && typeof parsed.startedOn === 'string') {
+      return { challengeId: parsed.challengeId, startedOn: parsed.startedOn }
+    }
+  } catch {
+    window.localStorage.removeItem(ACTIVE_CHALLENGE_STORAGE_KEY)
+  }
+
+  return null
+}
+
 const RECIPE_CARB_SIGNALS = ['Low', 'Medium', 'Relax'] as const
 const RECIPE_FILTERS = ['All', ...RECIPE_CARB_SIGNALS] as const
 
@@ -331,6 +361,23 @@ type CompletedFastRecord = {
   startedAtIso: string
   endedAtIso: string
   completedOn: string
+}
+
+type ChallengeDefinition = {
+  id: string
+  title: string
+  durationDays: number
+  targetFasts: number
+  minimumFastHours: number
+  subtitle: string
+  accent: 'mint' | 'sun' | 'coral'
+  benefits: string[]
+  reward: string
+}
+
+type ActiveChallengeState = {
+  challengeId: string
+  startedOn: string
 }
 
 type WorkoutLogEntry = {
@@ -367,6 +414,42 @@ const DEFAULT_LIFT_PROGRESS: Record<string, LiftProgressEntry> = {
   'Deadlift 1x5 or Trap Bar 3x3-5': { label: 'Deadlift 1x5 or Trap Bar 3x3-5', weight: 185, increment: 10, failures: 0, updatedAtIso: '2026-05-06T00:00:00.000Z' },
   'Trap Bar Deadlift 3x3-5': { label: 'Trap Bar Deadlift 3x3-5', weight: 185, increment: 10, failures: 0, updatedAtIso: '2026-05-06T00:00:00.000Z' },
 }
+
+const FASTING_CHALLENGES: ChallengeDefinition[] = [
+  {
+    id: 'fasting-7',
+    title: '7-Day Fasting Reset',
+    durationDays: 7,
+    targetFasts: 4,
+    minimumFastHours: 12,
+    subtitle: 'Get started with 4 clean fasts in 7 days.',
+    accent: 'mint',
+    benefits: ['Build momentum fast', 'Re-establish meal timing', 'Low-friction win for getting back on track'],
+    reward: '7-Day Reset badge',
+  },
+  {
+    id: 'fasting-14',
+    title: '14-Day Fasting Rhythm',
+    durationDays: 14,
+    targetFasts: 10,
+    minimumFastHours: 12,
+    subtitle: 'Transform consistency in two weeks.',
+    accent: 'sun',
+    benefits: ['Noticeable discipline shift', 'Cleaner fasting windows', 'More stable weekday rhythm'],
+    reward: '14-Day Rhythm badge',
+  },
+  {
+    id: 'fasting-21',
+    title: '21-Day Fasting Consistency',
+    durationDays: 21,
+    targetFasts: 16,
+    minimumFastHours: 12,
+    subtitle: 'Master the rhythm of fasting in 21 days.',
+    accent: 'coral',
+    benefits: ['Turns fasting into identity', 'Stronger appetite control', 'Best bridge into long-term LifeOS discipline'],
+    reward: '21-Day Consistency badge',
+  },
+]
 
 const recipeLibrary: Recipe[] = [
   {
@@ -920,6 +1003,8 @@ function App() {
   const [selectedFastingPlan, setSelectedFastingPlan] = useState(storedFastingPlanInitialValue)
   const [isPlanPickerOpen, setIsPlanPickerOpen] = useState(false)
   const [focusedPlan, setFocusedPlan] = useState<FastingPlan | null>(null)
+  const [activeChallenge, setActiveChallenge] = useState<ActiveChallengeState | null>(challengeStateInitialValue)
+  const [focusedChallengeId, setFocusedChallengeId] = useState<string | null>(null)
   const [editingTimeField, setEditingTimeField] = useState<'start' | 'end' | null>(null)
   const [timeDraftDate, setTimeDraftDate] = useState(todayIso)
   const [timeDraftTime, setTimeDraftTime] = useState(plannedFastStartInitialValue)
@@ -1131,6 +1216,43 @@ function App() {
     }),
     [fastingHistory, liftProgress, workoutLog],
   )
+  const activeChallengeDefinition = useMemo(
+    () => FASTING_CHALLENGES.find((challenge) => challenge.id === activeChallenge?.challengeId) ?? null,
+    [activeChallenge],
+  )
+  const challengeSnapshot = useMemo(() => {
+    if (!activeChallengeDefinition || !activeChallenge) return null
+
+    const deadline = shiftDate(activeChallenge.startedOn, activeChallengeDefinition.durationDays - 1)
+    const qualifiedFasts = fastingHistory.filter(
+      (entry) =>
+        entry.actualHours >= activeChallengeDefinition.minimumFastHours &&
+        dateIsoToAnchor(entry.completedOn).getTime() >= dateIsoToAnchor(activeChallenge.startedOn).getTime() &&
+        dateIsoToAnchor(entry.completedOn).getTime() <= dateIsoToAnchor(deadline).getTime(),
+    )
+    const progressCount = qualifiedFasts.length
+    const completed = progressCount >= activeChallengeDefinition.targetFasts
+    const expired = dateIsoToAnchor(selectedDate).getTime() > dateIsoToAnchor(deadline).getTime()
+    const status = completed ? 'Completed' : expired ? 'Incomplete' : 'Active'
+
+    return {
+      challenge: activeChallengeDefinition,
+      startedOn: activeChallenge.startedOn,
+      deadline,
+      progressCount,
+      progressPercent: Math.min(100, (progressCount / activeChallengeDefinition.targetFasts) * 100),
+      remaining: Math.max(0, activeChallengeDefinition.targetFasts - progressCount),
+      status,
+      qualifiedFasts,
+    }
+  }, [activeChallenge, activeChallengeDefinition, fastingHistory, selectedDate])
+  const focusedChallenge = useMemo(
+    () =>
+      FASTING_CHALLENGES.find(
+        (challenge) => challenge.id === (focusedChallengeId ?? activeChallengeDefinition?.id ?? FASTING_CHALLENGES[2].id),
+      ) ?? FASTING_CHALLENGES[2],
+    [activeChallengeDefinition?.id, focusedChallengeId],
+  )
   const mainLiftProgress = useMemo(
     () =>
       workout.lifts
@@ -1207,6 +1329,15 @@ function App() {
   useEffect(() => {
     window.localStorage.setItem(FASTING_PLAN_STORAGE_KEY, JSON.stringify(selectedFastingPlan))
   }, [selectedFastingPlan])
+
+  useEffect(() => {
+    if (activeChallenge) {
+      window.localStorage.setItem(ACTIVE_CHALLENGE_STORAGE_KEY, JSON.stringify(activeChallenge))
+      return
+    }
+
+    window.localStorage.removeItem(ACTIVE_CHALLENGE_STORAGE_KEY)
+  }, [activeChallenge])
 
   useEffect(() => {
     window.localStorage.setItem(PLANNED_FAST_START_TIME_STORAGE_KEY, plannedFastStartTime)
@@ -1371,6 +1502,27 @@ function App() {
     const element = document.getElementById(targetId)
     if (!element) return
     element.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  function openChallengeDetails(challengeId?: string) {
+    setFocusedChallengeId(challengeId ?? activeChallengeDefinition?.id ?? FASTING_CHALLENGES[2].id)
+  }
+
+  function joinChallenge(challengeId: string) {
+    setActiveChallenge({
+      challengeId,
+      startedOn: todayIso(),
+    })
+    setFocusedChallengeId(challengeId)
+  }
+
+  function restartActiveChallenge() {
+    if (!activeChallengeDefinition) return
+    setActiveChallenge({
+      challengeId: activeChallengeDefinition.id,
+      startedOn: todayIso(),
+    })
+    setFocusedChallengeId(activeChallengeDefinition.id)
   }
 
   function toggleWorkoutLog(status: WorkoutLogEntry['status'] = 'Done') {
@@ -2425,6 +2577,58 @@ function App() {
             </div>
           </article>
 
+          <article id="challenges" className={`panel compact-panel challenge-panel challenge-${challengeTone((challengeSnapshot?.challenge.accent ?? focusedChallenge.accent))}`}>
+            <div className="panel-title">
+              <Trophy size={20} aria-hidden="true" />
+              <h2>Monthly challenge</h2>
+            </div>
+            <div className="challenge-card-hero">
+              <span>{challengeSnapshot ? challengeSnapshot.status : 'Ready'}</span>
+              <strong>{challengeSnapshot?.challenge.title ?? focusedChallenge.title}</strong>
+              <p>{challengeSnapshot?.challenge.subtitle ?? focusedChallenge.subtitle}</p>
+            </div>
+            <div className="challenge-progress-strip">
+              <div className="challenge-progress-track">
+                <div
+                  className="challenge-progress-fill"
+                  style={{ width: `${challengeSnapshot?.progressPercent ?? 0}%` }}
+                />
+              </div>
+              <p>
+                Progress: {challengeSnapshot?.progressCount ?? 0}/
+                {challengeSnapshot?.challenge.targetFasts ?? focusedChallenge.targetFasts}
+              </p>
+            </div>
+            <div className="challenge-summary-grid">
+              <section>
+                <span>Window</span>
+                <strong>{challengeSnapshot?.challenge.durationDays ?? focusedChallenge.durationDays} days</strong>
+              </section>
+              <section>
+                <span>Target</span>
+                <strong>{challengeSnapshot?.challenge.targetFasts ?? focusedChallenge.targetFasts} fasts</strong>
+              </section>
+              <section>
+                <span>Reward</span>
+                <strong>{challengeSnapshot?.challenge.reward ?? focusedChallenge.reward}</strong>
+              </section>
+            </div>
+            <div className="challenge-card-actions">
+              <button type="button" className="challenge-primary-button" onClick={() => openChallengeDetails()}>
+                {challengeSnapshot ? 'Open challenge' : 'Browse challenges'}
+              </button>
+              {challengeSnapshot ? (
+                <button type="button" className="challenge-secondary-button" onClick={restartActiveChallenge}>
+                  Restart
+                </button>
+              ) : null}
+            </div>
+            <a className="challenge-portal-link" href={LEARNING_PORTAL_URL}>
+              Portal monthly challenges
+              <ExternalLink size={14} aria-hidden="true" />
+            </a>
+          </article>
+
           <article id="me" className="panel compact-panel priorities-panel">
             <div className="panel-title">
               <Moon size={20} aria-hidden="true" />
@@ -3040,6 +3244,132 @@ function App() {
                 </div>
               </section>
             ))}
+          </div>
+        </section>
+      ) : null}
+
+      {focusedChallengeId ? (
+        <section className="challenge-detail-backdrop" aria-label="Fasting challenge details">
+          <div className={`challenge-detail-sheet challenge-${challengeTone(focusedChallenge.accent)}`}>
+            <header className="challenge-detail-header">
+              <div>
+                <span className="eyebrow">Challenge</span>
+                <h2>{focusedChallenge.title}</h2>
+              </div>
+              <button type="button" onClick={() => setFocusedChallengeId(null)} aria-label="Close challenge details">
+                <X size={20} aria-hidden="true" />
+              </button>
+            </header>
+
+            <section className="challenge-detail-hero">
+              <div>
+                <span>{focusedChallenge.durationDays} days</span>
+                <strong>{focusedChallenge.subtitle}</strong>
+                <p>
+                  Log {focusedChallenge.targetFasts} fasts of {focusedChallenge.minimumFastHours}h or longer within the
+                  challenge window.
+                </p>
+              </div>
+              <div className="challenge-hero-badge">
+                <Award size={22} aria-hidden="true" />
+                <span>{focusedChallenge.reward}</span>
+              </div>
+            </section>
+
+            <section className="challenge-detail-section">
+              <h3>How to challenge</h3>
+              <ol className="challenge-rule-list">
+                <li>Join the challenge to start the timer.</li>
+                <li>Complete {focusedChallenge.targetFasts} fasts of at least {focusedChallenge.minimumFastHours}h.</li>
+                <li>Keep the fasting window clean and log each finished fast in LifeOS.</li>
+              </ol>
+            </section>
+
+            <section className="challenge-detail-section">
+              <h3>What you will get</h3>
+              <div className="challenge-benefit-list">
+                {focusedChallenge.benefits.map((benefit) => (
+                  <article className="challenge-benefit" key={benefit}>
+                    <Flag size={16} aria-hidden="true" />
+                    <span>{benefit}</span>
+                  </article>
+                ))}
+              </div>
+            </section>
+
+            <section className="challenge-detail-section">
+              <h3>Progress</h3>
+              <div className="challenge-progress-card">
+                <div className="challenge-progress-track large">
+                  <div
+                    className="challenge-progress-fill"
+                    style={{
+                      width: `${
+                        activeChallenge?.challengeId === focusedChallenge.id && challengeSnapshot ? challengeSnapshot.progressPercent : 0
+                      }%`,
+                    }}
+                  />
+                </div>
+                <div className="challenge-summary-grid">
+                  <section>
+                    <span>Progress</span>
+                    <strong>
+                      {activeChallenge?.challengeId === focusedChallenge.id && challengeSnapshot ? challengeSnapshot.progressCount : 0}/
+                      {focusedChallenge.targetFasts}
+                    </strong>
+                  </section>
+                  <section>
+                    <span>Status</span>
+                    <strong>
+                      {activeChallenge?.challengeId === focusedChallenge.id && challengeSnapshot ? challengeSnapshot.status : 'Not joined'}
+                    </strong>
+                  </section>
+                  <section>
+                    <span>Reward</span>
+                    <strong>{focusedChallenge.reward}</strong>
+                  </section>
+                </div>
+              </div>
+            </section>
+
+            <section className="challenge-detail-section">
+              <h3>Challenge ladder</h3>
+              <div className="challenge-option-grid">
+                {FASTING_CHALLENGES.map((challenge) => (
+                  <button
+                    type="button"
+                    key={challenge.id}
+                    className={`challenge-option challenge-${challengeTone(challenge.accent)} ${
+                      challenge.id === focusedChallenge.id ? 'selected' : ''
+                    }`}
+                    onClick={() => setFocusedChallengeId(challenge.id)}
+                  >
+                    <strong>{challenge.title}</strong>
+                    <span>
+                      {challenge.targetFasts} fasts / {challenge.durationDays} days
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            <div className="challenge-detail-actions">
+              <button
+                type="button"
+                className="challenge-primary-button"
+                onClick={() => joinChallenge(focusedChallenge.id)}
+              >
+                {activeChallenge?.challengeId === focusedChallenge.id && challengeSnapshot?.status === 'Completed'
+                  ? 'Restart challenge'
+                  : activeChallenge?.challengeId === focusedChallenge.id
+                    ? 'Joined'
+                    : 'Join'}
+              </button>
+              <a className="challenge-portal-link" href={LEARNING_PORTAL_URL}>
+                Open in Portal
+                <ExternalLink size={14} aria-hidden="true" />
+              </a>
+            </div>
           </div>
         </section>
       ) : null}
