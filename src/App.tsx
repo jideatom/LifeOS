@@ -81,12 +81,197 @@ function readinessLabel(readiness: string) {
 }
 
 function fastingPlanProfile(plan: FastingPlan): FastingPlanProfile {
+  switch (plan.protocol) {
+    case '12:12':
+      return {
+        benefits: ['Easiest fasting habit to maintain', 'Gentle appetite reset', 'Better control over random snacking'],
+        suitableFor: ['Beginners', 'Recovery weeks', 'People easing into fasting while cleaning up meals'],
+        notSuitableFor: ['People expecting dramatic body-composition changes without fixing meal quality'],
+        advice: ['Use this as a rhythm builder, not a finish line. Clean suppers still matter.'],
+        precautions: ['If even this feels rough, tighten food quality and sleep before extending the fast.'],
+      }
+    case '13:11':
+      return {
+        benefits: ['Gentle structure', 'Improved consistency over free eating', 'A realistic bridge toward 14:10 and 16:8'],
+        suitableFor: ['Beginners who want a small step up', 'Travel or busy weeks', 'People rebuilding fasting confidence'],
+        notSuitableFor: ['Anyone wanting a stricter cut without tightening meal quality'],
+        advice: ['Keep the evening meal controlled so the shorter fast still has a real effect.'],
+        precautions: ['If hunger is constant, check meal composition before jumping to harsher fasting.'],
+      }
+    case '14:10':
+      return {
+        benefits: ['Better eating-window discipline', 'Lower-friction daily fasting', 'Useful balance between structure and flexibility'],
+        suitableFor: ['Busy schedules', 'People moving beyond beginner fasting', 'Weeks when training still needs fuel flexibility'],
+        notSuitableFor: ['People wanting a very tight feeding window as their main strategy'],
+        advice: ['A good weekday reset fast when sleep or training demands make 16:8 feel too tight.'],
+        precautions: ['Still prioritize protein and avoid grazing during the eating window.'],
+      }
+    case '15:9':
+      return {
+        benefits: ['More structure than 14:10', 'Better control over appetite drift', 'Strong bridge into 16:8'],
+        suitableFor: ['People progressing steadily', 'Those who can comfortably delay the first meal', 'Low-carb weekday routines'],
+        notSuitableFor: ['People with frequent energy crashes or poor sleep'],
+        advice: ['Treat this as a bridge plan and move to 16:8 once it feels steady.'],
+        precautions: ['If workouts feel flat, review sleep and pre-fast supper before pushing harder.'],
+      }
+    case '16:8':
+      return {
+        benefits: ['Sustainable weight loss', 'Improved metabolic health', 'Good fit with low-carb suppers', 'Improved meal discipline', 'Repeatable long-term fasting rhythm'],
+        suitableFor: ['Repeatable weekday fasting', 'People balancing training and fasting', 'Busy schedules that still need structure'],
+        notSuitableFor: ['People taking medications requiring regular meals', 'Those with low blood pressure symptoms', 'People with a history of disordered eating'],
+        advice: ['This is the best default LifeOS fast: repeatable, serious, and still training-friendly.'],
+        precautions: ['If dizziness, palpitations, or repeated weakness show up, stop and reassess before pushing longer windows.'],
+      }
+    case '17:7':
+      return {
+        benefits: ['Stronger appetite control', 'Tighter eating window', 'Good transition into deeper fasting'],
+        suitableFor: ['People already stable on 16:8', 'Intermediate fasters', 'Weeks with solid sleep and routine'],
+        notSuitableFor: ['Beginners', 'People whose heavy training already feels under-fueled'],
+        advice: ['Best used when supper is satisfying and the next day is not chaotic.'],
+        precautions: ['Watch recovery on squat and deadlift days before making this a default.'],
+      }
+    case '18:6':
+      return {
+        benefits: ['Stronger appetite control', 'More deliberate eating window', 'Useful bridge toward deeper fasting', 'Supports lower-carb momentum'],
+        suitableFor: ['Intermediate fasters', 'People comfortable skipping breakfast', 'Those wanting stronger structure than 16:8'],
+        notSuitableFor: ['Beginners without consistent fasting history', 'People with low blood pressure symptoms', 'Anyone prone to rebound overeating'],
+        advice: ['Best used when sleep is decent and supper the previous night was satisfying.'],
+        precautions: ['Heavy training and poor readiness do not mix well with 18:6.'],
+      }
+    case '19:5':
+      return {
+        benefits: ['Tighter fasting discipline', 'Smaller eating window can simplify decisions', 'Useful cut-phase structure'],
+        suitableFor: ['Experienced fasters', 'People who handle small eating windows well', 'Stable routines with controlled meals'],
+        notSuitableFor: ['Beginners', 'People with high training stress', 'People who tend to binge after long restriction'],
+        advice: ['Break the fast calmly with protein first, not with a reward meal.'],
+        precautions: ['If sleep quality or mood starts slipping, ease back rather than forcing it.'],
+      }
+    case '20:4':
+      return {
+        benefits: ['Sustainable weight loss', 'Improved metabolic health', 'Increased mental clarity'],
+        suitableFor: ['Advanced fasters focused on aggressive weight loss', 'People who can handle longer fasting windows'],
+        notSuitableFor: [
+          'Those with low blood pressure',
+          'People taking medications requiring regular meals',
+          'Underweight individuals',
+          'Pregnant or breastfeeding women',
+          'Beginners without prior fasting experience',
+          'Those with gastrointestinal issues',
+          'Those with diabetes',
+        ],
+        advice: ['Plan meals that are balanced and rich in vitamins and minerals.', 'Stay busy during fasting hours to reduce fixation on hunger.', 'Protect sleep so the tight eating window does not become stress on top of stress.'],
+        precautions: ['Increased hunger may occur.', 'Not recommended for those with eating disorders.', 'If recovery tanks, move back to 18:6 or 16:8.'],
+      }
+    case '21:3':
+    case '22:2':
+    case '23:1':
+      return {
+        benefits: ['Very tight eating structure', 'Strong calorie control', 'Can simplify food decisions for advanced fasters'],
+        suitableFor: ['Very experienced fasters', 'Short challenge blocks', 'Busy days where one main meal is easier than grazing'],
+        notSuitableFor: [
+          'Beginners without prior fasting experience',
+          'People with low blood pressure',
+          'People taking medications requiring regular meals',
+          'Pregnant or breastfeeding women',
+          'Underweight individuals',
+          'People with gastrointestinal issues or diabetes',
+        ],
+        advice: ['Keep the single eating period nutrient-dense and protein-forward.', 'Use calm, deliberate meals instead of trying to “make up” for the long fast.', 'Do not pair this with hard training and poor sleep.'],
+        precautions: ['These protocols are not everyday defaults for most people.', 'If obsession, rebound eating, or severe fatigue shows up, step back immediately.'],
+      }
+    case '24h':
+      return {
+        benefits: ['Sustainable weight loss', 'Improved metabolic health', 'Enhanced longevity', 'Cellular repair and autophagy support'],
+        suitableFor: ['Reset for the body', 'Managing one full day without food', 'Experienced fasters using occasional structured fasts'],
+        notSuitableFor: [
+          'Those with low blood pressure',
+          'People taking medications requiring regular meals',
+          'Underweight individuals',
+          'Pregnant or breastfeeding women',
+          'Inexperienced fasters',
+          'Individuals with existing health issues such as diabetes or chronic gastrointestinal problems',
+          'Individuals with extreme fatigue or energy deficiencies',
+        ],
+        advice: ['Break the fast with light and easily digested foods to reduce gastrointestinal discomfort.', 'Drink water, herbal teas, or electrolytes to stay hydrated.', 'Prepare balanced meals in advance so refeeding stays controlled.'],
+        precautions: ['Not suitable for those with unstable medical conditions.', 'Pay attention to how your body responds and adjust rather than forcing completion.'],
+      }
+    case '30h':
+      return {
+        benefits: ['Deeper break from frequent eating', 'Stronger fasting discipline', 'Useful bridge between 24h and multi-day fasting'],
+        suitableFor: ['Advanced fasters building toward longer protocols', 'Occasional challenge weeks', 'Low-stress periods with lighter training'],
+        notSuitableFor: [
+          'Beginners without prior fasting experience',
+          'People with low blood pressure',
+          'People taking medications requiring regular meals',
+          'Underweight individuals',
+          'Pregnant or breastfeeding women',
+          'People with chronic medical conditions unless medically cleared',
+        ],
+        advice: ['Prepare for fasting days in advance.', 'Use nutrient-dense meals before and after the fast.', 'Keep activity light and avoid ego-driven training.'],
+        precautions: ['This is no longer casual intermittent fasting.', 'If dizziness, weakness, or poor concentration escalates, stop and refeed.'],
+      }
+    case '48h':
+      return {
+        benefits: ['Sustainable weight loss', 'Enhanced longevity', 'Cellular repair and autophagy support'],
+        suitableFor: ['Advanced fasters seeking maximum health benefits', 'People with prior fasting experience'],
+        notSuitableFor: [
+          'Those with low blood pressure',
+          'People taking medications requiring regular meals',
+          'Underweight individuals',
+          'Pregnant or breastfeeding women',
+          'Those without prior fasting experience',
+          'Individuals with existing health issues such as diabetes, gastrointestinal issues, or chronic health conditions',
+          'Individuals prone to dehydration',
+          'Individuals with extreme fatigue or energy deficiencies',
+        ],
+        advice: ['Stay hydrated and consider electrolyte supplementation.', 'Prioritize relaxation and light activities.', 'Prepare mentally and physically before starting.'],
+        precautions: ['Risk of severe fatigue and dehydration.', 'Requires significant fasting experience.', 'Higher risk of nutrient shortfall and poor recovery if used carelessly.', 'Consider consulting a healthcare professional before prolonged fasting.'],
+      }
+    case '72h':
+      return {
+        benefits: ['Sustainable weight loss', 'Enhanced longevity', 'Cellular repair and autophagy support'],
+        suitableFor: ['Very experienced fasters focusing on longevity', 'Medically fit individuals only'],
+        notSuitableFor: [
+          'Those with low blood pressure',
+          'People taking medications requiring regular meals',
+          'Underweight individuals',
+          'Pregnant or breastfeeding women',
+          'Those without prior fasting experience',
+          'Those without medical supervision',
+          'Individuals with existing health issues such as diabetes, gastrointestinal issues, or chronic health conditions',
+          'Individuals prone to dehydration',
+          'Individuals with extreme fatigue or energy deficiencies',
+        ],
+        advice: ['Stay hydrated and consider electrolyte supplementation.', 'Prioritize relaxation and light activities.', 'Prepare mentally and physically before starting.'],
+        precautions: ['Risk of severe fatigue and dehydration.', 'Requires significant fasting experience.', 'High risk of nutrient deficiency if repeated carelessly.', 'Consult a healthcare professional for prolonged fasting.'],
+      }
+    case '96h':
+      return {
+        benefits: ['Extended fasting discipline', 'Very deep break from frequent eating', 'Challenge-level protocol for highly experienced fasters'],
+        suitableFor: ['Only very experienced fasters', 'Rare challenge use, not routine use', 'Periods with strong recovery and no heavy training demands'],
+        notSuitableFor: [
+          'Beginners without prior fasting experience',
+          'People with low blood pressure',
+          'People taking medications requiring regular meals',
+          'Underweight individuals',
+          'Pregnant or breastfeeding women',
+          'Anyone with medical conditions unless directly supervised',
+          'Anyone with a history of disordered eating',
+        ],
+        advice: ['Reduce activity drastically and prepare the refeed before you start.', 'Treat electrolyte intake, rest, and mental state as non-optional.', 'Do not make this a badge-of-honor protocol.'],
+        precautions: ['This sits well beyond ordinary intermittent fasting.', 'Professional medical guidance is strongly advisable.', 'Stop if symptoms escalate instead of chasing the clock.'],
+      }
+    default:
+      break
+  }
+
   if (plan.fastingHours <= 14) {
     return {
       benefits: ['Easier consistency', 'Gentler appetite reset', 'Better eating-window structure'],
       suitableFor: ['Beginners building rhythm', 'Busy weekdays', 'People testing fasting without heavy strain'],
       notSuitableFor: ['People expecting strong results without also cleaning up meal quality'],
       advice: ['Use this to establish routine first, then tighten later if needed.'],
+      precautions: ['Use meal quality, sleep, and consistency to decide when to progress.'],
     }
   }
 
@@ -96,6 +281,7 @@ function fastingPlanProfile(plan: FastingPlan): FastingPlanProfile {
       suitableFor: ['Repeatable weekday fasting', 'People balancing training and fasting', 'Busy schedules that still need structure'],
       notSuitableFor: ['Anyone with medication schedules that require regular meals', 'People with repeated dizziness when fasting'],
       advice: ['This is the best default LifeOS fast: repeatable, serious, and still training-friendly.'],
+      precautions: ['If symptoms repeat, shorten the fast and review recovery first.'],
     }
   }
 
@@ -105,6 +291,7 @@ function fastingPlanProfile(plan: FastingPlan): FastingPlanProfile {
       suitableFor: ['Intermediate fasters', 'People comfortable skipping breakfast', 'Those wanting stronger structure than 16:8'],
       notSuitableFor: ['Beginners who still struggle with hunger swings', 'Heavy lifting days when recovery is poor'],
       advice: ['Best used when sleep is decent and supper the previous night was satisfying.'],
+      precautions: ['Do not force this on red-readiness days.'],
     }
   }
 
@@ -114,6 +301,7 @@ function fastingPlanProfile(plan: FastingPlan): FastingPlanProfile {
       suitableFor: ['Experienced fasters', 'Aggressive cut phases', 'Weeks when routine is stable'],
       notSuitableFor: ['Beginners', 'People with low blood pressure symptoms', 'Anyone pushing heavy training without enough recovery'],
       advice: ['Keep protein high and break the fast with a calm, controlled meal instead of a rebound feast.'],
+      precautions: ['Aggressive windows work best as phases, not permanent defaults.'],
     }
   }
 
@@ -123,6 +311,7 @@ function fastingPlanProfile(plan: FastingPlan): FastingPlanProfile {
       suitableFor: ['Advanced fasters only', 'Occasional challenge days', 'Controlled low-stress schedules'],
       notSuitableFor: ['Pregnant or breastfeeding women', 'Underweight individuals', 'People with diabetes or medical conditions unless cleared by a clinician'],
       advice: ['Treat this as an advanced tool, not your casual everyday default.'],
+      precautions: ['Longer fasts deserve calmer days and more deliberate refeeds.'],
     }
   }
 
@@ -137,6 +326,7 @@ function fastingPlanProfile(plan: FastingPlan): FastingPlanProfile {
       'Anyone with a history of disordered eating',
     ],
     advice: ['Use caution, lower training intensity, and have a deliberate refeed plan before starting.'],
+    precautions: ['If you need to ask whether you are ready for this, the answer is usually not yet.'],
   }
 }
 
@@ -404,6 +594,7 @@ type FastingPlanProfile = {
   suitableFor: string[]
   notSuitableFor: string[]
   advice: string[]
+  precautions: string[]
 }
 
 const DEFAULT_LIFT_PROGRESS: Record<string, LiftProgressEntry> = {
@@ -1253,6 +1444,7 @@ function App() {
       ) ?? FASTING_CHALLENGES[2],
     [activeChallengeDefinition?.id, focusedChallengeId],
   )
+  const focusedPlanProfile = useMemo(() => (focusedPlan ? fastingPlanProfile(focusedPlan) : null), [focusedPlan])
   const mainLiftProgress = useMemo(
     () =>
       workout.lifts
@@ -3154,7 +3346,7 @@ function App() {
                 <section className="plan-detail-section">
                   <h4>Benefits</h4>
                   <div className="plan-detail-list">
-                    {fastingPlanProfile(focusedPlan).benefits.map((item) => (
+                    {focusedPlanProfile?.benefits.map((item) => (
                       <article className="plan-detail-item" key={`benefit-${item}`}>
                         <CheckCircle2 size={18} aria-hidden="true" />
                         <span>{item}</span>
@@ -3166,7 +3358,7 @@ function App() {
                   <div className="plan-detail-box">
                     <h4>Suitable for</h4>
                     <ul>
-                      {fastingPlanProfile(focusedPlan).suitableFor.map((item) => (
+                      {focusedPlanProfile?.suitableFor.map((item) => (
                         <li key={`suitable-${item}`}>{item}</li>
                       ))}
                     </ul>
@@ -3174,7 +3366,7 @@ function App() {
                   <div className="plan-detail-box plan-detail-box-caution">
                     <h4>Not suitable for</h4>
                     <ul>
-                      {fastingPlanProfile(focusedPlan).notSuitableFor.map((item) => (
+                      {focusedPlanProfile?.notSuitableFor.map((item) => (
                         <li key={`not-${item}`}>{item}</li>
                       ))}
                     </ul>
@@ -3183,8 +3375,19 @@ function App() {
                 <section className="plan-detail-section">
                   <h4>Practical advice</h4>
                   <div className="plan-detail-list">
-                    {fastingPlanProfile(focusedPlan).advice.map((item) => (
+                    {focusedPlanProfile?.advice.map((item) => (
                       <article className="plan-detail-item" key={`advice-${item}`}>
+                        <Flame size={18} aria-hidden="true" />
+                        <span>{item}</span>
+                      </article>
+                    ))}
+                  </div>
+                </section>
+                <section className="plan-detail-section">
+                  <h4>Health precautions</h4>
+                  <div className="plan-detail-list">
+                    {focusedPlanProfile?.precautions.map((item) => (
+                      <article className="plan-detail-item plan-detail-item-caution" key={`precaution-${item}`}>
                         <Flame size={18} aria-hidden="true" />
                         <span>{item}</span>
                       </article>

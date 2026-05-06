@@ -2796,6 +2796,10 @@ h3 {
   color: #22b083;
 }
 
+.plan-detail-item-caution svg:first-child {
+  color: #d1861a;
+}
+
 .plan-detail-item span {
   color: #233f57;
   line-height: 1.45;
