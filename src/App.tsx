@@ -2572,6 +2572,58 @@ function App() {
             </div>
           </article>
 
+          <article id="challenges" className={`panel compact-panel challenge-panel challenge-${challengeTone((challengeSnapshot?.challenge.accent ?? focusedChallenge.accent))}`}>
+            <div className="panel-title">
+              <Trophy size={20} aria-hidden="true" />
+              <h2>Monthly challenge</h2>
+            </div>
+            <div className="challenge-card-hero">
+              <span>{challengeSnapshot ? challengeSnapshot.status : 'Ready'}</span>
+              <strong>{challengeSnapshot?.challenge.title ?? focusedChallenge.title}</strong>
+              <p>{challengeSnapshot?.challenge.subtitle ?? focusedChallenge.subtitle}</p>
+            </div>
+            <div className="challenge-progress-strip">
+              <div className="challenge-progress-track">
+                <div
+                  className="challenge-progress-fill"
+                  style={{ width: `${challengeSnapshot?.progressPercent ?? 0}%` }}
+                />
+              </div>
+              <p>
+                Progress: {challengeSnapshot?.progressCount ?? 0}/
+                {challengeSnapshot?.challenge.targetFasts ?? focusedChallenge.targetFasts}
+              </p>
+            </div>
+            <div className="challenge-summary-grid">
+              <section>
+                <span>Window</span>
+                <strong>{challengeSnapshot?.challenge.durationDays ?? focusedChallenge.durationDays} days</strong>
+              </section>
+              <section>
+                <span>Target</span>
+                <strong>{challengeSnapshot?.challenge.targetFasts ?? focusedChallenge.targetFasts} fasts</strong>
+              </section>
+              <section>
+                <span>Reward</span>
+                <strong>{challengeSnapshot?.challenge.reward ?? focusedChallenge.reward}</strong>
+              </section>
+            </div>
+            <div className="challenge-card-actions">
+              <button type="button" className="challenge-primary-button" onClick={() => openChallengeDetails()}>
+                {challengeSnapshot ? 'Open challenge' : 'Browse challenges'}
+              </button>
+              {challengeSnapshot ? (
+                <button type="button" className="challenge-secondary-button" onClick={restartActiveChallenge}>
+                  Restart
+                </button>
+              ) : null}
+            </div>
+            <a className="challenge-portal-link" href={LEARNING_PORTAL_URL}>
+              Portal monthly challenges
+              <ExternalLink size={14} aria-hidden="true" />
+            </a>
+          </article>
+
           <article id="recipes" className="panel recipes-panel">
             <div className="panel-title">
               <BookOpen size={20} aria-hidden="true" />
@@ -2767,58 +2819,6 @@ function App() {
                 Practical integration route: Fitbit writes to Health Connect on Android, then a LifeOS Android wrapper or companion app reads those records and sends daily summaries into this dashboard.
               </p>
             </div>
-          </article>
-
-          <article id="challenges" className={`panel compact-panel challenge-panel challenge-${challengeTone((challengeSnapshot?.challenge.accent ?? focusedChallenge.accent))}`}>
-            <div className="panel-title">
-              <Trophy size={20} aria-hidden="true" />
-              <h2>Monthly challenge</h2>
-            </div>
-            <div className="challenge-card-hero">
-              <span>{challengeSnapshot ? challengeSnapshot.status : 'Ready'}</span>
-              <strong>{challengeSnapshot?.challenge.title ?? focusedChallenge.title}</strong>
-              <p>{challengeSnapshot?.challenge.subtitle ?? focusedChallenge.subtitle}</p>
-            </div>
-            <div className="challenge-progress-strip">
-              <div className="challenge-progress-track">
-                <div
-                  className="challenge-progress-fill"
-                  style={{ width: `${challengeSnapshot?.progressPercent ?? 0}%` }}
-                />
-              </div>
-              <p>
-                Progress: {challengeSnapshot?.progressCount ?? 0}/
-                {challengeSnapshot?.challenge.targetFasts ?? focusedChallenge.targetFasts}
-              </p>
-            </div>
-            <div className="challenge-summary-grid">
-              <section>
-                <span>Window</span>
-                <strong>{challengeSnapshot?.challenge.durationDays ?? focusedChallenge.durationDays} days</strong>
-              </section>
-              <section>
-                <span>Target</span>
-                <strong>{challengeSnapshot?.challenge.targetFasts ?? focusedChallenge.targetFasts} fasts</strong>
-              </section>
-              <section>
-                <span>Reward</span>
-                <strong>{challengeSnapshot?.challenge.reward ?? focusedChallenge.reward}</strong>
-              </section>
-            </div>
-            <div className="challenge-card-actions">
-              <button type="button" className="challenge-primary-button" onClick={() => openChallengeDetails()}>
-                {challengeSnapshot ? 'Open challenge' : 'Browse challenges'}
-              </button>
-              {challengeSnapshot ? (
-                <button type="button" className="challenge-secondary-button" onClick={restartActiveChallenge}>
-                  Restart
-                </button>
-              ) : null}
-            </div>
-            <a className="challenge-portal-link" href={LEARNING_PORTAL_URL}>
-              Portal monthly challenges
-              <ExternalLink size={14} aria-hidden="true" />
-            </a>
           </article>
 
           <article id="me" className="panel compact-panel priorities-panel">
