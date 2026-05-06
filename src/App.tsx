@@ -873,7 +873,7 @@ function App() {
     const weeklySkips = skippedSessions.filter((entry) => currentWeekDates.includes(entry.date)).length
     const currentMonthPrefix = selectedDate.slice(0, 7)
     const monthlyCompletions = completedSessions.filter((entry) => entry.date.startsWith(currentMonthPrefix)).length
-    const recentSessions = completedSessions.slice(0, 4)
+    const recentSessions = completedSessions.slice(0, 3)
     const planBreakdown = Object.entries(
       completedSessions.reduce(
         (breakdown, entry) => ({
@@ -1743,16 +1743,16 @@ function App() {
                   <strong>{workoutStats.totalSessions}</strong>
                 </section>
               </div>
-              <div className="workout-log-list">
-                {workoutStats.recentSessions.length > 0 ? (
-                  workoutStats.recentSessions.map((entry) => (
-                    <article className="workout-log-entry" key={entry.id}>
-                      <span>{relativeDateLabel(entry.date, selectedDate)}</span>
-                      <strong>{entry.plan}</strong>
-                      <p>{entry.focus}</p>
-                    </article>
-                  ))
-                ) : (
+                <div className="workout-log-list">
+                  {workoutStats.recentSessions.length > 0 ? (
+                    workoutStats.recentSessions.map((entry) => (
+                      <article className="workout-log-entry" key={entry.id}>
+                        <strong>{entry.plan}</strong>
+                        <span>{relativeDateLabel(entry.date, selectedDate)}</span>
+                        <p>{entry.focus}</p>
+                      </article>
+                    ))
+                  ) : (
                   <p className="muted">Your recent completed training sessions will appear here.</p>
                 )}
               </div>

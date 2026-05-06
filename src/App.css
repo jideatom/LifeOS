@@ -1362,6 +1362,10 @@ h3 {
     #fffdf8;
 }
 
+.workout-log-panel.compact-panel {
+  min-height: 0;
+}
+
 .fasting-records-panel {
   border-left: 5px solid #1b5e59;
   background:
@@ -1374,7 +1378,7 @@ h3 {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
-  margin-top: 18px;
+  margin-top: 14px;
 }
 
 .fasting-records-stats {
@@ -1383,7 +1387,7 @@ h3 {
 
 .workout-log-stats section,
 .fasting-records-stats section {
-  padding: 12px;
+  padding: 10px 12px;
   border: 1px solid rgba(23, 32, 29, 0.1);
   border-radius: 8px;
   background: rgba(255, 253, 248, 0.88);
@@ -1392,15 +1396,15 @@ h3 {
 .workout-log-stats strong,
 .fasting-records-stats strong {
   display: block;
-  margin-top: 8px;
-  font-size: 24px;
+  margin-top: 6px;
+  font-size: 21px;
 }
 
 .workout-log-list,
 .fasting-record-list {
   display: grid;
-  gap: 10px;
-  margin-top: 16px;
+  gap: 8px;
+  margin-top: 12px;
 }
 
 .fasting-trend-grid {
@@ -1446,8 +1450,9 @@ h3 {
 .workout-log-entry,
 .fasting-record-entry {
   display: grid;
-  gap: 5px;
-  padding: 12px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 10px;
+  padding: 10px 12px;
   border: 1px solid rgba(23, 32, 29, 0.1);
   border-left: 5px solid rgba(56, 111, 147, 0.4);
   border-radius: 8px;
@@ -1456,6 +1461,7 @@ h3 {
 
 .fasting-record-entry {
   border-left-color: rgba(27, 94, 89, 0.42);
+  grid-template-columns: 1fr;
 }
 
 .workout-log-entry strong,
@@ -1463,10 +1469,20 @@ h3 {
   color: #17201d;
 }
 
+.workout-log-entry span {
+  align-self: start;
+  color: #63726d;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
 .workout-log-entry p,
 .fasting-record-entry p {
+  grid-column: 1 / -1;
   color: #56655f;
-  line-height: 1.45;
+  font-size: 13px;
+  line-height: 1.35;
 }
 
 .sync-panel {
