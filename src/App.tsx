@@ -1217,6 +1217,7 @@ function App() {
       ? 'Notion auto-sync is ready.'
       : 'Notion auto-sync needs the private API URL. Local saving is active.',
   )
+  const planPickerRef = useRef<HTMLDivElement | null>(null)
   const [cloudSyncMessage, setCloudSyncMessage] = useState(
     hasSupabaseConfig ? 'Cloud sync ready. Loading shared LifeOS data.' : 'Cloud sync not configured. Using local device storage.',
   )
@@ -1530,6 +1531,11 @@ function App() {
 
     window.localStorage.removeItem(ACTIVE_CHALLENGE_STORAGE_KEY)
   }, [activeChallenge])
+
+  useEffect(() => {
+    if (!focusedPlan) return
+    planPickerRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [focusedPlan])
 
   useEffect(() => {
     window.localStorage.setItem(PLANNED_FAST_START_TIME_STORAGE_KEY, plannedFastStartTime)
@@ -3231,7 +3237,7 @@ function App() {
 
       {isPlanPickerOpen ? (
         <section className="plan-picker-backdrop" aria-label="Fasting plan picker">
-          <div className="plan-picker">
+          <div className="plan-picker" ref={planPickerRef}>
             <header className="plan-picker-header">
               <div>
                 <span className="eyebrow">Fasting type</span>
