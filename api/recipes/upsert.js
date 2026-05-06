@@ -8,6 +8,7 @@ const DEFAULT_ALLOWED_ORIGINS = [
   'https://misimisys.github.io',
   'https://jideatom.github.io',
 ]
+const databaseSchemaCache = new Map()
 
 function sendJson(response, statusCode, payload) {
   response.statusCode = statusCode
@@ -69,8 +70,8 @@ function titleProperty(value) {
   }
 }
 
-function recipeProperties(recipe) {
-  return {
+function recipeProperties(recipe, hasRecipeKeyProperty) {
+  const properties = {
     Name: titleProperty(recipe.title),
     Type: textProperty(recipe.tag),
     'Carb Signal': textProperty(recipe.carbSignal),
@@ -78,8 +79,13 @@ function recipeProperties(recipe) {
     Protein: textProperty(recipe.protein),
     'Vehicle / Note': textProperty(recipe.vehicle),
     Source: textProperty(recipe.source),
-    [RECIPE_KEY_PROPERTY]: textProperty(recipe.id),
   }
+
+  if (hasRecipeKeyProperty) {
+    properties[RECIPE_KEY_PROPERTY] = textProperty(recipe.id)
+  }
+
+  return properties
 }
 
 async function notionRequest(path, init = {}) {
@@ -102,16 +108,34 @@ async function notionRequest(path, init = {}) {
   return payload
 }
 
-async function findRecipePage(databaseId, recipeId) {
+async function getDatabaseSchema(databaseId) {
+  if (databaseSchemaCache.has(databaseId)) {
+    return databaseSchemaCache.get(databaseId)
+  }
+
+  const payload = await notionRequest(`/databases/${databaseId}`)
+  const properties = payload.properties || {}
+  databaseSchemaCache.set(databaseId, properties)
+  return properties
+}
+
+async function findRecipePage(databaseId, recipe, hasRecipeKeyProperty) {
   const payload = await notionRequest(`/databases/${databaseId}/query`, {
     method: 'POST',
     body: JSON.stringify({
-      filter: {
-        property: RECIPE_KEY_PROPERTY,
-        rich_text: {
-          equals: recipeId,
-        },
-      },
+      filter: hasRecipeKeyProperty
+        ? {
+            property: RECIPE_KEY_PROPERTY,
+            rich_text: {
+              equals: recipe.id,
+            },
+          }
+        : {
+            property: 'Name',
+            title: {
+              equals: recipe.title,
+            },
+          },
       page_size: 1,
     }),
   })
@@ -120,8 +144,10 @@ async function findRecipePage(databaseId, recipeId) {
 }
 
 async function upsertRecipe(databaseId, recipe) {
-  const existingPage = await findRecipePage(databaseId, recipe.id)
-  const properties = recipeProperties(recipe)
+  const schema = await getDatabaseSchema(databaseId)
+  const hasRecipeKeyProperty = Boolean(schema[RECIPE_KEY_PROPERTY])
+  const existingPage = await findRecipePage(databaseId, recipe, hasRecipeKeyProperty)
+  const properties = recipeProperties(recipe, hasRecipeKeyProperty)
 
   if (existingPage?.id) {
     await notionRequest(`/pages/${existingPage.id}`, {
