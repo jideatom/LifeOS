@@ -51,7 +51,7 @@ import './App.css'
 
 const NOTION_LIFEOS_URL =
   'https://app.notion.com/p/LifeOS-Command-Center-3544ab8a5f28813d967af856319c8f67?source=copy_link'
-const DEFAULT_NOTION_SYNC_ENDPOINT = 'https://life-os-jideatoms-projects.vercel.app/api/recipes/upsert'
+const DEFAULT_NOTION_SYNC_ENDPOINT = 'https://life-os-lac-pi.vercel.app/api/recipes/upsert'
 const NOTION_SYNC_ENDPOINT = import.meta.env.VITE_LIFEOS_SYNC_API_URL ?? DEFAULT_NOTION_SYNC_ENDPOINT
 const ACTIVE_FAST_STORAGE_KEY = 'lifeos.activeFastStartIso'
 const FASTING_PLAN_STORAGE_KEY = 'lifeos.selectedFastingPlan'
@@ -876,6 +876,8 @@ function App() {
     hasSupabaseConfig ? 'Cloud sync ready. Loading shared LifeOS data.' : 'Cloud sync not configured. Using local device storage.',
   )
   const hasHydratedCloudState = useRef(false)
+  const mealEditorRef = useRef<HTMLFormElement | null>(null)
+  const recipeEditorRef = useRef<HTMLFormElement | null>(null)
   const storedCustomPlan = useMemo(() => storedCustomPlanInitialValue(), [])
   const [customFastingHours, setCustomFastingHours] = useState(storedCustomPlan.fastingHours)
   const [customEatingHours, setCustomEatingHours] = useState(storedCustomPlan.eatingHours)
@@ -1167,6 +1169,20 @@ function App() {
   useEffect(() => {
     window.localStorage.setItem(MEAL_TIMELINE_STORAGE_KEY, JSON.stringify(mealTimelineByDate))
   }, [mealTimelineByDate])
+
+  useEffect(() => {
+    if (!editingMealId) return
+    window.requestAnimationFrame(() => {
+      if (mealEditorRef.current) mealEditorRef.current.scrollTop = 0
+    })
+  }, [editingMealId])
+
+  useEffect(() => {
+    if (!editingRecipeId) return
+    window.requestAnimationFrame(() => {
+      if (recipeEditorRef.current) recipeEditorRef.current.scrollTop = 0
+    })
+  }, [editingRecipeId])
 
   useEffect(() => {
     if (!hasSupabaseConfig) {
@@ -2435,6 +2451,7 @@ function App() {
         <section className="recipe-editor-backdrop" aria-label="Meal timeline editor">
           <form
             className="recipe-editor-sheet meal-editor-sheet"
+            ref={mealEditorRef}
             onSubmit={(event) => {
               event.preventDefault()
               saveMeal()
@@ -2563,6 +2580,7 @@ function App() {
         <section className="recipe-editor-backdrop" aria-label="Recipe editor">
           <form
             className="recipe-editor-sheet"
+            ref={recipeEditorRef}
             onSubmit={(event) => {
               event.preventDefault()
               saveRecipe()
