@@ -1942,6 +1942,15 @@ function App() {
       return
     }
     setFitbitMessage('Google Health opened in a new tab. Complete sign-in there, then return here.')
+
+    const statusPoll = window.setInterval(() => {
+      void loadFitbitBridgeStatus()
+
+      if (healthWindow.closed) {
+        window.clearInterval(statusPoll)
+        void loadFitbitBridgeStatus()
+      }
+    }, 2000)
   }
 
   function handleFastAction() {
