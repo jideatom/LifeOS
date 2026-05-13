@@ -3106,85 +3106,6 @@ function App() {
             </div>
           </article>
 
-          <article id="fasting-phases" className="panel fasting-phases-panel">
-            <div className="panel-title">
-              <Flame size={20} aria-hidden="true" />
-              <h2>Fasting Phases 0-96h</h2>
-            </div>
-            <div className="phase-stack">
-              {fastingPhases.map((phase) => (
-                <section className={`phase-row phase-${phase.status.toLowerCase()}`} key={phase.id}>
-                  <div className="phase-marker">
-                    {phase.status === 'Active' ? <ChevronRight size={18} aria-hidden="true" /> : null}
-                    <strong>{phase.window}</strong>
-                    <span>{phase.status}</span>
-                  </div>
-                  <div>
-                    <h3>{phase.name}</h3>
-                    <p>{phase.essence}</p>
-                    <small>{phase.healthNote}</small>
-                    <small className="phase-source">{phase.sourceNote}</small>
-                  </div>
-                </section>
-              ))}
-            </div>
-          </article>
-
-          <article className="panel compact-panel fasting-records-panel">
-            <div className="panel-title">
-              <TimerReset size={20} aria-hidden="true" />
-              <h2>Fasting Records</h2>
-            </div>
-            <div className="fasting-records-stats">
-              <section>
-                <span>Longest</span>
-                <strong>{formatTargetHours(fastingStats.longestFast)}h</strong>
-              </section>
-              <section>
-                <span>Days logged</span>
-                <strong>{fastingStats.fastingDays}</strong>
-              </section>
-              <section>
-                <span>Completed</span>
-                <strong>{fastingStats.completedSessions}</strong>
-              </section>
-            </div>
-            <div className="fasting-trend-grid">
-              <section className="fasting-trend-card">
-                <span>This week</span>
-                <strong>{fastingStats.weeklySessions}</strong>
-                <p>Completed fasts across the last 7 days.</p>
-              </section>
-              <section className="fasting-trend-card">
-                <span>This month</span>
-                <strong>{fastingStats.monthlySessions}</strong>
-                <p>Completed fasts in the current month.</p>
-              </section>
-            </div>
-            <div className="protocol-breakdown-list">
-              {fastingStats.protocolBreakdown.length > 0 ? (
-                fastingStats.protocolBreakdown.map(([protocol, count]) => (
-                  <article className="protocol-breakdown-entry" key={protocol}>
-                    <span>{protocol}</span>
-                    <strong>{count}</strong>
-                  </article>
-                ))
-              ) : (
-                <p className="muted">Protocol mix will appear once you complete a few fasts.</p>
-              )}
-            </div>
-            <div className="fasting-record-list">
-              {fastingHistory.slice(0, 4).map((entry) => (
-                <article className="fasting-record-entry" key={entry.id}>
-                  <span>{relativeDateLabel(entry.completedOn, selectedDate)}</span>
-                  <strong>{entry.protocol}</strong>
-                  <p>Actual {formatTargetHours(entry.actualHours)}h · Planned {formatTargetHours(entry.plannedHours)}h</p>
-                </article>
-              ))}
-              {fastingHistory.length === 0 ? <p className="muted">Completed fasts will start building your record here.</p> : null}
-            </div>
-          </article>
-
           <article id="me" className="panel compact-panel priorities-panel">
             <div className="panel-title">
               <Moon size={20} aria-hidden="true" />
@@ -3347,6 +3268,85 @@ function App() {
                 </div>
               </section>
             </div>
+          <article id="fasting-phases" className="panel fasting-phases-panel">
+            <div className="panel-title">
+              <Flame size={20} aria-hidden="true" />
+              <h2>Fasting Phases 0-96h</h2>
+            </div>
+            <div className="phase-stack">
+              {fastingPhases.map((phase) => (
+                <section className={`phase-row phase-${phase.status.toLowerCase()}`} key={phase.id}>
+                  <div className="phase-marker">
+                    {phase.status === 'Active' ? <ChevronRight size={18} aria-hidden="true" /> : null}
+                    <strong>{phase.window}</strong>
+                    <span>{phase.status}</span>
+                  </div>
+                  <div>
+                    <h3>{phase.name}</h3>
+                    <p>{phase.essence}</p>
+                    <small>{phase.healthNote}</small>
+                    <small className="phase-source">{phase.sourceNote}</small>
+                  </div>
+                </section>
+              ))}
+            </div>
+          </article>
+
+          <article className="panel compact-panel fasting-records-panel">
+            <div className="panel-title">
+              <TimerReset size={20} aria-hidden="true" />
+              <h2>Fasting Records</h2>
+            </div>
+            <div className="fasting-records-stats">
+              <section>
+                <span>Longest</span>
+                <strong>{formatTargetHours(fastingStats.longestFast)}h</strong>
+              </section>
+              <section>
+                <span>Days logged</span>
+                <strong>{fastingStats.fastingDays}</strong>
+              </section>
+              <section>
+                <span>Completed</span>
+                <strong>{fastingStats.completedSessions}</strong>
+              </section>
+            </div>
+            <div className="fasting-trend-grid">
+              <section className="fasting-trend-card">
+                <span>This week</span>
+                <strong>{fastingStats.weeklySessions}</strong>
+                <p>Completed fasts across the last 7 days.</p>
+              </section>
+              <section className="fasting-trend-card">
+                <span>This month</span>
+                <strong>{fastingStats.monthlySessions}</strong>
+                <p>Completed fasts in the current month.</p>
+              </section>
+            </div>
+            <div className="protocol-breakdown-list">
+              {fastingStats.protocolBreakdown.length > 0 ? (
+                fastingStats.protocolBreakdown.map(([protocol, count]) => (
+                  <article className="protocol-breakdown-entry" key={protocol}>
+                    <span>{protocol}</span>
+                    <strong>{count}</strong>
+                  </article>
+                ))
+              ) : (
+                <p className="muted">Protocol mix will appear once you complete a few fasts.</p>
+              )}
+            </div>
+            <div className="fasting-record-list">
+              {fastingHistory.slice(0, 4).map((entry) => (
+                <article className="fasting-record-entry" key={entry.id}>
+                  <span>{relativeDateLabel(entry.completedOn, selectedDate)}</span>
+                  <strong>{entry.protocol}</strong>
+                  <p>Actual {formatTargetHours(entry.actualHours)}h · Planned {formatTargetHours(entry.plannedHours)}h</p>
+                </article>
+              ))}
+              {fastingHistory.length === 0 ? <p className="muted">Completed fasts will start building your record here.</p> : null}
+            </div>
+          </article>
+
           </article>
         </section>
       </section>
