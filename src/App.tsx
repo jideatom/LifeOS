@@ -1229,11 +1229,11 @@ function metricStatus(value: number | null | undefined, goodFloor: number, watch
 }
 
 function formatFitbitSyncStamp(iso: string | null) {
-  if (!iso) return 'No Fitbit sync yet'
+  if (!iso) return 'No phone health sync yet'
   const stamp = new Date(iso)
-  if (Number.isNaN(stamp.getTime())) return 'No Fitbit sync yet'
+  if (Number.isNaN(stamp.getTime())) return 'No phone health sync yet'
 
-  return `Last Fitbit sync ${new Intl.DateTimeFormat('en-NG', {
+  return `Last phone sync ${new Intl.DateTimeFormat('en-NG', {
     month: 'short',
     day: 'numeric',
     hour: 'numeric',
@@ -1271,14 +1271,16 @@ function App() {
       : 'Notion auto-sync needs the private API URL. Local saving is active.',
   )
   const [cloudSyncMessage, setCloudSyncMessage] = useState(
-    hasSupabaseConfig ? 'Cloud sync ready. Loading shared LifeOS data.' : 'Cloud sync not configured. Using local device storage.',
+    hasSupabaseConfig
+      ? 'Shared LifeOS data is ready. Phone syncs feed Supabase, and desktop reflects the shared state.'
+      : 'Shared LifeOS sync is not configured yet. This device is still using local storage.',
   )
   const [fitbitBridge, setFitbitBridge] = useState<FitbitBridgeState>({
     connected: false,
     lastSyncedAt: null,
     latestMetrics: null,
   })
-  const [fitbitMessage, setFitbitMessage] = useState('Fitbit bridge not connected yet.')
+  const [fitbitMessage, setFitbitMessage] = useState('Phone health bridge not connected yet.')
   const [isFitbitSyncing, setIsFitbitSyncing] = useState(false)
   const hasHydratedCloudState = useRef(false)
   const isApplyingCloudState = useRef(false)
@@ -1879,7 +1881,7 @@ function App() {
       setFitbitMessage(
         payload.connected
           ? formatFitbitSyncStamp(payload.lastSyncedAt ?? payload.latestMetrics?.synced_at ?? null)
-          : 'Google Health bridge ready to connect. This will feed Fitbit and other supported health signals into the dashboard.',
+          : 'Phone health bridge ready. Connect from your phone first, then let desktop reflect the shared data.',
       )
     } catch (error) {
       setFitbitMessage(error instanceof Error ? error.message : 'Could not load Google Health bridge status.')
@@ -3160,12 +3162,12 @@ function App() {
             <p className="sync-roadmap-note">{cloudSyncMessage}</p>
             <div className="sync-summary">
               <section className="sync-summary-card">
-                <span>Google Health bridge</span>
+                <span>Phone health source</span>
                 <strong>{fitbitBridge.connected ? 'Connected' : 'Not connected'}</strong>
                 <p>{fitbitMessage}</p>
                 <div className="fitbit-action-row">
                   <button type="button" className="fitbit-primary-button" onClick={connectFitbitBridge}>
-                    {fitbitBridge.connected ? 'Reconnect Google Health' : 'Connect Google Health'}
+                    {fitbitBridge.connected ? 'Reconnect phone health' : 'Connect phone health'}
                   </button>
                   <button
                     type="button"
@@ -3173,15 +3175,15 @@ function App() {
                     onClick={() => void syncFitbitBridgeNow()}
                     disabled={!fitbitBridge.connected || isFitbitSyncing}
                   >
-                    {isFitbitSyncing ? 'Syncing…' : 'Sync latest'}
+                    {isFitbitSyncing ? 'Syncing…' : 'Pull latest phone data'}
                   </button>
                 </div>
               </section>
               <section className="sync-summary-card">
-                <span>Bridge status</span>
-                <strong>{hasSupabaseConfig ? 'Cloud sync connected' : 'Cloud sync not configured'}</strong>
+                <span>Shared dashboard</span>
+                <strong>{hasSupabaseConfig ? 'Desktop is reading shared data' : 'Shared sync not configured'}</strong>
                 <p>
-                  Shared data now depends on Supabase env keys plus the tables you already created for LifeOS.
+                  Phone is the main sync device. Desktop should mirror the Supabase health and LifeOS data after phone sync.
                 </p>
               </section>
               <section className="sync-summary-card">
@@ -3224,7 +3226,7 @@ function App() {
             <div className="health-connect-panel">
               <div className="health-connect-header">
                 <h3>Health Connect Path</h3>
-                <p>The phone side is partly ready. For this web app, Google Health OAuth is the live path; Health Connect still needs an Android companion layer.</p>
+                <p>LifeOS is mobile first. Your phone remains the primary health sync device, while desktop works as the shared dashboard and review surface.</p>
               </div>
               <div className="health-connect-steps">
                 {healthConnectSetup.map((item) => (
@@ -3236,7 +3238,7 @@ function App() {
                 ))}
               </div>
               <p className="sync-roadmap-note">
-                Practical integration route: Google Health powers the web dashboard path, while Health Connect can still feed a future Android companion layer.
+                Practical route: Fitbit watch to Fitbit app to phone health source, then shared LifeOS data flows into desktop through Supabase.
               </p>
             </div>
           </article>
