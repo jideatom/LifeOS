@@ -1634,9 +1634,9 @@ function App() {
         detail: 'Fitbit must keep writing steps, sleep, heart rate, weight, and workouts into the phone-side health source.',
       },
       {
-        step: 'LifeOS phone capture layer',
-        status: 'Build next',
-        detail: 'LifeOS still needs a true phone-first capture layer so it can ingest the same health data the phone already holds.',
+        step: 'Phone ingest API ready',
+        status: 'Ready',
+        detail: 'LifeOS now has a secure phone ingest endpoint. The missing piece is the phone-side reader that will POST real daily metrics into it.',
       },
       {
         step: 'Desktop mirror flow',
@@ -3201,12 +3201,12 @@ function App() {
                 </p>
               </section>
               <section className="sync-summary-card">
-                <span>Phone sync result</span>
-                <strong>{hasImportedPhoneMetric ? 'Usable health data landed' : 'Auth worked, metrics still empty'}</strong>
+                <span>Phone ingest path</span>
+                <strong>{hasImportedPhoneMetric ? 'Usable health data landed' : 'Secure phone ingest API is ready'}</strong>
                 <p>
                   {hasImportedPhoneMetric
                     ? 'The shared dashboard can now use real phone-side health values instead of placeholders.'
-                    : 'This usually means the current web bridge connected successfully, but your actual Fitbit or Health Connect metrics have not flowed through yet.'}
+                    : 'The backend is ready for a phone-side Health Connect reader to POST daily metrics into LifeOS without depending on desktop browser auth.'}
                 </p>
               </section>
             </div>
@@ -3258,7 +3258,7 @@ function App() {
                 ))}
               </div>
               <p className="sync-roadmap-note">
-                Practical route: Fitbit watch to Fitbit app to phone health source, then shared LifeOS data flows into desktop through Supabase.
+                Practical route: Fitbit watch to Fitbit app to phone health source, then a phone-side LifeOS sync layer POSTs into the secure ingest API and desktop reflects the Supabase row.
               </p>
             </div>
           </article>

@@ -8,7 +8,7 @@ LifeOS is a health operating system for fasting, Abuja/Yoruba nutrition, StrongL
 - Fasting-first daily command center
 - Yoruba low-carb nutrition model
 - Home gym StrongLifts plan
-- Fitbit app -> Health Connect -> LifeOS sync design
+- Phone-first health sync architecture
 - Typed domain contracts in `src/domain/lifeos.ts`
 - Architecture notes in `docs/`
 
@@ -26,12 +26,12 @@ npm run lint
 1. Wire dashboard data to local typed fixtures.
 2. Add Notion connector for Daily Health Log, Fasting Sessions, Workout Log and Fitbit Sync Inbox.
 3. Add authentication/config handling for Notion API credentials.
-4. Build Android Health Connect bridge for Fitbit import.
+4. Build Android Health Connect reader that posts daily health snapshots into `/api/health/ingest`.
 5. Add readiness engine based on sleep, resting HR, soreness and fasting state.
 
 ## Data Backbone
 
-Notion remains the editable source of truth during the first phase. The app becomes the daily interface.
+Supabase is now the shared app data layer, while Notion remains the editable planning/documentation layer. The app becomes the daily interface.
 
 Primary Notion modules:
 
