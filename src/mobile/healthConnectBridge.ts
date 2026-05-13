@@ -19,7 +19,7 @@ export type NativePhoneSyncResult = {
 
 type HealthConnectBridgePlugin = {
   getStatus(): Promise<HealthConnectBridgeStatus>
-  requestPermissions(): Promise<HealthConnectBridgeStatus>
+  grantPermissions(): Promise<HealthConnectBridgeStatus>
   syncToday(): Promise<NativePhoneSyncResult>
 }
 

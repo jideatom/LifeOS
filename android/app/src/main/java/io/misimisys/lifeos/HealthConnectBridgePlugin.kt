@@ -93,7 +93,7 @@ class HealthConnectBridgePlugin : Plugin() {
     }
 
     @PluginMethod
-    fun requestPermissions(call: PluginCall) {
+    fun grantPermissions(call: PluginCall) {
         val status = sdkStatus()
         if (status != HealthConnectClient.SDK_AVAILABLE) {
             call.reject(
@@ -233,7 +233,7 @@ class HealthConnectBridgePlugin : Plugin() {
             source = "Phone Health Sync",
             sleepHours = totalSleepHours,
             sleepScore = null,
-            restingHeartRate = restingHeartRateRecords.firstOrNull()?.beatsPerMinute?.roundToInt(),
+            restingHeartRate = restingHeartRateRecords.firstOrNull()?.beatsPerMinute?.toDouble()?.roundToInt(),
             steps = aggregate[StepsRecord.COUNT_TOTAL]?.toInt(),
             activeZoneMinutes = null,
             caloriesBurned = aggregate[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.inKilocalories?.roundToInt(),

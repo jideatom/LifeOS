@@ -2014,7 +2014,7 @@ function App() {
     if (usesNativePhoneShell) {
       void (async () => {
         try {
-          const status = await HealthConnectBridge.requestPermissions()
+          const status = await HealthConnectBridge.grantPermissions()
           setFitbitBridge((current) => ({
             ...current,
             connected: status.permissionsGranted || current.connected,
