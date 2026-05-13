@@ -1270,7 +1270,7 @@ function App() {
       ? 'Notion auto-sync is ready.'
       : 'Notion auto-sync needs the private API URL. Local saving is active.',
   )
-  const [cloudSyncMessage, setCloudSyncMessage] = useState(
+  const [, setCloudSyncMessage] = useState(
     hasSupabaseConfig
       ? 'Shared LifeOS data is ready. Phone syncs feed Supabase, and desktop reflects the shared state.'
       : 'Shared LifeOS sync is not configured yet. This device is still using local storage.',
@@ -1280,7 +1280,7 @@ function App() {
     lastSyncedAt: null,
     latestMetrics: null,
   })
-  const [fitbitMessage, setFitbitMessage] = useState('Phone health bridge not connected yet.')
+  const [, setFitbitMessage] = useState('Phone health bridge not connected yet.')
   const [isFitbitSyncing, setIsFitbitSyncing] = useState(false)
   const hasHydratedCloudState = useRef(false)
   const isApplyingCloudState = useRef(false)
@@ -2749,7 +2749,6 @@ function App() {
                   <small>{signal.eyebrow}</small>
                 </div>
                 <strong>{signal.value}</strong>
-                <p>{signal.detail}</p>
                 <div className="signal-metric-row">
                   {signal.metrics.map((metric) => (
                     <div className="signal-metric-chip" key={`${signal.label}-${metric.label}`}>
@@ -2759,7 +2758,6 @@ function App() {
                   ))}
                 </div>
                 <div className="signal-card-footer">
-                  <small>{signal.cta}</small>
                   <ChevronRight size={16} aria-hidden="true" />
                 </div>
               </button>
@@ -2838,11 +2836,6 @@ function App() {
                   Mark skipped
                 </button>
               </div>
-              <p className="workout-log-note">
-                {loggedWorkoutForSelectedDay
-                  ? `${loggedWorkoutForSelectedDay.status} on ${relativeDateLabel(loggedWorkoutForSelectedDay.date, selectedDate)} for ${loggedWorkoutForSelectedDay.plan}.`
-                  : 'No training log saved yet for this day.'}
-              </p>
             </article>
 
             <article className="panel compact-panel workout-log-panel">
@@ -2881,7 +2874,6 @@ function App() {
               <Smartphone size={20} aria-hidden="true" />
               <h2>Health Sync Inbox</h2>
             </div>
-            <p className="sync-roadmap-note">{cloudSyncMessage}</p>
             <div className="sync-summary">
               <section className="sync-summary-card">
                 <span>Phone health source</span>
@@ -2892,7 +2884,6 @@ function App() {
                       : 'Connected, waiting for metrics'
                     : 'Not connected'}
                 </strong>
-                <p>{fitbitMessage}</p>
                 <div className="fitbit-action-row">
                   <button type="button" className="fitbit-primary-button" onClick={connectFitbitBridge}>
                     {fitbitBridge.connected ? 'Reconnect phone health' : 'Connect phone health'}
@@ -2910,18 +2901,10 @@ function App() {
               <section className="sync-summary-card">
                 <span>Shared dashboard</span>
                 <strong>{hasSupabaseConfig ? 'Desktop is reading shared data' : 'Shared sync not configured'}</strong>
-                <p>
-                  Phone is the main sync device. Desktop should mirror the Supabase health and LifeOS data after phone sync.
-                </p>
               </section>
               <section className="sync-summary-card">
                 <span>Phone ingest path</span>
                 <strong>{hasImportedPhoneMetric ? 'Usable health data landed' : 'Secure phone ingest API is ready'}</strong>
-                <p>
-                  {hasImportedPhoneMetric
-                    ? 'The shared dashboard can now use real phone-side health values instead of placeholders.'
-                    : 'The backend is ready for a phone-side Health Connect reader to POST daily metrics into LifeOS without depending on desktop browser auth.'}
-                </p>
               </section>
             </div>
             <div className="metric-grid">
@@ -2948,13 +2931,6 @@ function App() {
               </div>
               <div className="step-goal-meta">
                 <strong>{currentSteps.toLocaleString()}</strong>
-                <span>
-                  {hasImportedPhoneMetric
-                    ? stepGoalHit
-                      ? 'Phone health data says the movement floor is done for today.'
-                      : `${remainingSteps.toLocaleString()} more steps needed to close the gap.`
-                    : 'Waiting for real phone step data before LifeOS can score today against the 10,000-step floor.'}
-                </span>
               </div>
             </section>
           </article>
@@ -2973,9 +2949,6 @@ function App() {
                 Reset this day
               </button>
             </div>
-            <p className="meal-timeline-note">
-              This timeline is editable per day, so your fast can break in the morning, afternoon, or night depending on the plan.
-            </p>
             <div className="meal-stack">
               {displayedMeals.map((meal) => (
                 <section className={`meal-row carb-${meal.carbSignal.toLowerCase()}`} key={meal.id}>
@@ -3016,7 +2989,6 @@ function App() {
                 <section className={`nutrition-rule ${rule.label === 'Avoid' ? 'nutrition-avoid' : ''}`} key={rule.label}>
                   <span>{rule.label}</span>
                   <strong>{rule.value}</strong>
-                  <p>{rule.detail}</p>
                 </section>
               ))}
             </div>
@@ -3079,9 +3051,6 @@ function App() {
               <BookOpen size={20} aria-hidden="true" />
               <h2>Recipes</h2>
             </div>
-            <p className="recipes-intro">
-              Low-carb meals first, medium-carb meals controlled, relax foods clearly marked.
-            </p>
             <p className="recipe-sync-note">{recipeSyncMessage}</p>
             <div className="recipe-action-row">
               <button type="button" onClick={() => openRecipeEditor()}>
@@ -3142,10 +3111,6 @@ function App() {
               <Flame size={20} aria-hidden="true" />
               <h2>Fasting Phases 0-96h</h2>
             </div>
-            <p className="phase-disclaimer">
-              Phase timing is approximate. Food choice, training, sleep, insulin sensitivity, and fast length can move the
-              boundaries.
-            </p>
             <div className="phase-stack">
               {fastingPhases.map((phase) => (
                 <section className={`phase-row phase-${phase.status.toLowerCase()}`} key={phase.id}>
@@ -3240,11 +3205,6 @@ function App() {
               <CalendarDays size={20} aria-hidden="true" />
               <h2>Notion Backbone</h2>
             </div>
-            <p className="muted">
-              Command Center captures the day. Notion remains the editable source of truth for the
-              Daily Health Log, Fasting Sessions, Meal Plan, Workout Log, Exercise Library, Health
-              Sync Inbox, and Weekly Reviews.
-            </p>
           </article>
 
           <article id="progress" className="panel progress-panel">
@@ -3385,10 +3345,6 @@ function App() {
                     </div>
                   </section>
                 </div>
-                <p className="progress-note">
-                  Weekly skips this cycle: {workoutStats.weeklySkips}. Use the lift cards in Training to mark wins,
-                  missed reps, and deloads as they happen.
-                </p>
               </section>
             </div>
           </article>
