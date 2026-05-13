@@ -1621,31 +1621,6 @@ function App() {
     () => workoutLog.find((entry) => entry.date === selectedDate && entry.plan === workout.plan),
     [selectedDate, workout.plan, workoutLog],
   )
-  const healthConnectSetup = useMemo(
-    () => [
-      {
-        step: 'Phone app ready',
-        status: 'Done',
-        detail: 'Health Connect is already installed on your Android phone.',
-      },
-      {
-        step: 'Fitbit to phone data path',
-        status: 'Next',
-        detail: 'Fitbit must keep writing steps, sleep, heart rate, weight, and workouts into the phone-side health source.',
-      },
-      {
-        step: 'Phone ingest API ready',
-        status: 'Ready',
-        detail: 'LifeOS now has a secure phone ingest endpoint. The missing piece is the phone-side reader that will POST real daily metrics into it.',
-      },
-      {
-        step: 'Desktop mirror flow',
-        status: 'Then',
-        detail: 'Once phone sync is real, imported signals should land in Sync Inbox first, then feed readiness, fasting review, and workout recovery on every device.',
-      },
-    ],
-    [],
-  )
   const nutritionRules = [
     {
       label: 'Plate rule',
@@ -2982,24 +2957,6 @@ function App() {
                 </span>
               </div>
             </section>
-            <div className="health-connect-panel">
-              <div className="health-connect-header">
-                <h3>Health Connect Path</h3>
-                <p>LifeOS is mobile first. Your phone remains the primary health sync device, while desktop works as the shared dashboard and review surface.</p>
-              </div>
-              <div className="health-connect-steps">
-                {healthConnectSetup.map((item) => (
-                  <section className={`health-connect-step step-${item.status.toLowerCase().replace(/\s+/g, '-')}`} key={item.step}>
-                    <span>{item.status}</span>
-                    <strong>{item.step}</strong>
-                    <p>{item.detail}</p>
-                  </section>
-                ))}
-              </div>
-              <p className="sync-roadmap-note">
-                Practical route: Fitbit watch to Fitbit app to phone health source, then a phone-side LifeOS sync layer POSTs into the secure ingest API and desktop reflects the Supabase row.
-              </p>
-            </div>
           </article>
 
           <article id="meals" className="panel meals-panel">
