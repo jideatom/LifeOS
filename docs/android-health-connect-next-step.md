@@ -5,15 +5,17 @@ This repo now has:
 - a secure ingest endpoint at `/api/health/ingest`
 - a Capacitor config for a future Android shell
 - a small client helper at `src/mobile/phoneHealthSync.ts`
+- a native `HealthConnectBridge` plugin scaffold inside `android/app`
 
-## What still needs to be built
+## What still needs to be finished
 
-The missing layer is the Android-side reader that can:
+The Android bridge now attempts to:
 
 1. request Health Connect permissions
-2. read daily steps, sleep, heart rate, weight, and workout totals
-3. build a `PhoneHealthSnapshot`
-4. `POST` it to `/api/health/ingest`
+2. read daily steps, sleep, resting heart rate, weight, calories, distance, and workout totals
+3. upload that snapshot to `/api/health/ingest`
+
+The remaining work is validating the native build on a machine with a modern Android toolchain and then testing on-device.
 
 ## Recommended approach
 
@@ -39,12 +41,18 @@ Use a Capacitor Android shell for LifeOS and add a native plugin or bridge that 
 
 ## Proposed implementation order
 
-1. install Capacitor dependencies
-2. run `npx cap init` if you want to regenerate config interactively
-3. run `npx cap add android`
-4. create a native Health Connect bridge
-5. call `postPhoneHealthSnapshot()` from the mobile shell after permissioned reads
-6. refresh desktop from Supabase
+1. set Android build secrets in `android/local.properties` or environment variables:
+   - `LIFEOS_HEALTH_API_BASE=https://life-os-lac-pi.vercel.app`
+   - `LIFEOS_PHONE_SYNC_KEY=your_long_random_phone_sync_key`
+2. build the Android shell with Java 11+ (preferably Java 17)
+3. install on the phone
+4. grant Health Connect permissions from the app
+5. tap `Sync from this phone`
+6. confirm the Supabase row contains real values instead of `NULL`
+
+## Toolchain note
+
+The first native compile attempt on this machine stopped before plugin compilation because the local Gradle runtime is still using Java 8. The Android shell now needs Java 11+ and is safest on Java 17.
 
 ## Why this is the right model
 

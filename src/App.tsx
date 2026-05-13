@@ -49,6 +49,7 @@ import {
   type RecipeRow,
   type WorkoutLogRow,
 } from './supabase'
+import { HealthConnectBridge, isNativePhoneShell } from './mobile/healthConnectBridge'
 import './TodayDashboard.css'
 import './App.css'
 
@@ -87,6 +88,26 @@ function readinessLabel(readiness: string) {
   if (readiness === 'Green') return 'Train as planned'
   if (readiness === 'Yellow') return 'Train, hold load'
   return 'Recovery day'
+}
+
+function normalizeBridgeMetrics(metrics: Partial<FitbitDailyMetrics> | null | undefined): FitbitDailyMetrics | null {
+  if (!metrics || typeof metrics !== 'object') return null
+
+  return {
+    date: typeof metrics.date === 'string' ? metrics.date : todayIso(),
+    source: typeof metrics.source === 'string' ? metrics.source : 'Phone Health Sync',
+    sync_status: typeof metrics.sync_status === 'string' ? metrics.sync_status : 'Imported',
+    sleep_hours: typeof metrics.sleep_hours === 'number' ? metrics.sleep_hours : null,
+    sleep_score: typeof metrics.sleep_score === 'number' ? metrics.sleep_score : null,
+    resting_heart_rate: typeof metrics.resting_heart_rate === 'number' ? metrics.resting_heart_rate : null,
+    steps: typeof metrics.steps === 'number' ? metrics.steps : null,
+    active_zone_minutes: typeof metrics.active_zone_minutes === 'number' ? metrics.active_zone_minutes : null,
+    calories_burned: typeof metrics.calories_burned === 'number' ? metrics.calories_burned : null,
+    distance_km: typeof metrics.distance_km === 'number' ? metrics.distance_km : null,
+    workout_minutes: typeof metrics.workout_minutes === 'number' ? metrics.workout_minutes : null,
+    weight_kg: typeof metrics.weight_kg === 'number' ? metrics.weight_kg : null,
+    synced_at: typeof metrics.synced_at === 'string' ? metrics.synced_at : null,
+  }
 }
 
 function fastingPlanProfile(plan: FastingPlan): FastingPlanProfile {
@@ -1286,6 +1307,7 @@ function App() {
   const cloudHydrationInFlight = useRef(false)
   const mealEditorRef = useRef<HTMLFormElement | null>(null)
   const recipeEditorRef = useRef<HTMLFormElement | null>(null)
+  const usesNativePhoneShell = useMemo(() => isNativePhoneShell(), [])
   const storedCustomPlan = useMemo(() => storedCustomPlanInitialValue(), [])
   const [customFastingHours, setCustomFastingHours] = useState(storedCustomPlan.fastingHours)
   const [customEatingHours, setCustomEatingHours] = useState(storedCustomPlan.eatingHours)
@@ -1840,6 +1862,17 @@ function App() {
   }, [fastingHistory, workoutLog, mealTimelineByDate, recipes, liftProgress])
 
   const loadFitbitBridgeStatus = useCallback(async () => {
+    let serverPayload: {
+      connected: boolean
+      lastSyncedAt: string | null
+      latestMetrics: FitbitDailyMetrics | null
+    } = {
+      connected: false,
+      lastSyncedAt: null,
+      latestMetrics: null,
+    }
+    let serverError: string | null = null
+
     try {
       const response = await fetch(HEALTH_STATUS_ENDPOINT, { method: 'GET' })
       const payload = await response.json()
@@ -1847,20 +1880,69 @@ function App() {
         throw new Error(payload.error || 'Could not load Google Health bridge status')
       }
 
-      setFitbitBridge({
+      serverPayload = {
         connected: Boolean(payload.connected),
         lastSyncedAt: payload.lastSyncedAt ?? null,
-        latestMetrics: payload.latestMetrics ?? null,
-      })
-      setFitbitMessage(
-        payload.connected
-          ? formatFitbitSyncStamp(payload.lastSyncedAt ?? payload.latestMetrics?.synced_at ?? null)
-          : 'Phone health bridge ready. Connect from your phone first, then let desktop reflect the shared data.',
-      )
+        latestMetrics: normalizeBridgeMetrics(payload.latestMetrics),
+      }
     } catch (error) {
-      setFitbitMessage(error instanceof Error ? error.message : 'Could not load Google Health bridge status.')
+      serverError = error instanceof Error ? error.message : 'Could not load Google Health bridge status.'
     }
-  }, [])
+
+    let nativeStatus:
+      | {
+          available: boolean
+          providerStatus: 'available' | 'update_required' | 'unavailable'
+          permissionsGranted: boolean
+        }
+      | null = null
+
+    if (usesNativePhoneShell) {
+      try {
+        nativeStatus = await HealthConnectBridge.getStatus()
+      } catch (error) {
+        if (!serverError) {
+          serverError = error instanceof Error ? error.message : 'Could not load phone Health Connect status.'
+        }
+      }
+    }
+
+    const latestMetrics = serverPayload.latestMetrics
+    const connected = Boolean(nativeStatus?.permissionsGranted || serverPayload.connected)
+
+    setFitbitBridge({
+      connected,
+      lastSyncedAt: serverPayload.lastSyncedAt ?? latestMetrics?.synced_at ?? null,
+      latestMetrics,
+    })
+
+    if (latestMetrics?.synced_at) {
+      setFitbitMessage(formatFitbitSyncStamp(latestMetrics.synced_at))
+      return
+    }
+
+    if (usesNativePhoneShell && nativeStatus) {
+      if (!nativeStatus.available && nativeStatus.providerStatus === 'update_required') {
+        setFitbitMessage('Health Connect needs an update on this phone before LifeOS can sync.')
+        return
+      }
+      if (!nativeStatus.available) {
+        setFitbitMessage('Health Connect is not available on this phone yet.')
+        return
+      }
+      if (nativeStatus.permissionsGranted) {
+        setFitbitMessage('Phone permissions are ready. Sync from this phone to load dashboard data.')
+        return
+      }
+      setFitbitMessage('Grant Health Connect permissions on this phone first.')
+      return
+    }
+
+    setFitbitMessage(
+      serverError ??
+        'Phone health bridge ready. Connect from your phone first, then let desktop reflect the shared data.',
+    )
+  }, [usesNativePhoneShell])
 
   useEffect(() => {
     const bootLoadId = window.setTimeout(() => {
@@ -1889,6 +1971,20 @@ function App() {
   async function syncFitbitBridgeNow() {
     setIsFitbitSyncing(true)
     try {
+      if (usesNativePhoneShell) {
+        const payload = await HealthConnectBridge.syncToday()
+        const latestMetrics = normalizeBridgeMetrics(payload.metrics)
+        const syncedAt = payload.syncedAt ?? latestMetrics?.synced_at ?? new Date().toISOString()
+
+        setFitbitBridge({
+          connected: true,
+          lastSyncedAt: syncedAt,
+          latestMetrics,
+        })
+        setFitbitMessage(formatFitbitSyncStamp(syncedAt))
+        return
+      }
+
       const response = await fetch(HEALTH_SYNC_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1914,6 +2010,26 @@ function App() {
   function connectFitbitBridge(event?: React.MouseEvent<HTMLButtonElement>) {
     event?.preventDefault()
     event?.stopPropagation()
+
+    if (usesNativePhoneShell) {
+      void (async () => {
+        try {
+          const status = await HealthConnectBridge.requestPermissions()
+          setFitbitBridge((current) => ({
+            ...current,
+            connected: status.permissionsGranted || current.connected,
+          }))
+          setFitbitMessage(
+            status.permissionsGranted
+              ? 'Phone permissions granted. Sync from this phone to load dashboard data.'
+              : 'Health Connect permissions are still incomplete on this phone.',
+          )
+        } catch (error) {
+          setFitbitMessage(error instanceof Error ? error.message : 'Could not request phone permissions.')
+        }
+      })()
+      return
+    }
 
     const healthWindow = window.open('', '_blank')
     if (!healthWindow) {
@@ -2885,7 +3001,13 @@ function App() {
                 </strong>
                 <div className="fitbit-action-row">
                   <button type="button" className="fitbit-primary-button" onClick={connectFitbitBridge}>
-                    {fitbitBridge.connected ? 'Reconnect phone health' : 'Connect phone health'}
+                    {usesNativePhoneShell
+                      ? fitbitBridge.connected
+                        ? 'Refresh phone permissions'
+                        : 'Grant phone permissions'
+                      : fitbitBridge.connected
+                        ? 'Reconnect phone health'
+                        : 'Connect phone health'}
                   </button>
                   <button
                     type="button"
@@ -2893,7 +3015,7 @@ function App() {
                     onClick={() => void syncFitbitBridgeNow()}
                     disabled={!fitbitBridge.connected || isFitbitSyncing}
                   >
-                    {isFitbitSyncing ? 'Syncing…' : 'Pull latest phone data'}
+                    {isFitbitSyncing ? 'Syncing…' : usesNativePhoneShell ? 'Sync from this phone' : 'Pull latest phone data'}
                   </button>
                 </div>
               </section>
