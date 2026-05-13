@@ -621,6 +621,8 @@ type FitbitBridgeState = {
   connected: boolean
   lastSyncedAt: string | null
   latestMetrics: FitbitDailyMetrics | null
+  nativeAvailable: boolean
+  nativePermissionsGranted: boolean
 }
 
 type WorkoutLogEntry = {
@@ -1299,6 +1301,8 @@ function App() {
     connected: false,
     lastSyncedAt: null,
     latestMetrics: null,
+    nativeAvailable: false,
+    nativePermissionsGranted: false,
   })
   const [, setFitbitMessage] = useState('Phone health bridge not connected yet.')
   const [isFitbitSyncing, setIsFitbitSyncing] = useState(false)
@@ -1908,12 +1912,16 @@ function App() {
     }
 
     const latestMetrics = serverPayload.latestMetrics
-    const connected = Boolean(nativeStatus?.permissionsGranted || serverPayload.connected)
+    const connected = usesNativePhoneShell
+      ? Boolean(nativeStatus?.permissionsGranted || latestMetrics?.synced_at)
+      : Boolean(serverPayload.connected)
 
     setFitbitBridge({
       connected,
       lastSyncedAt: serverPayload.lastSyncedAt ?? latestMetrics?.synced_at ?? null,
       latestMetrics,
+      nativeAvailable: Boolean(nativeStatus?.available),
+      nativePermissionsGranted: Boolean(nativeStatus?.permissionsGranted),
     })
 
     if (latestMetrics?.synced_at) {
@@ -1980,6 +1988,8 @@ function App() {
           connected: true,
           lastSyncedAt: syncedAt,
           latestMetrics,
+          nativeAvailable: true,
+          nativePermissionsGranted: true,
         })
         setFitbitMessage(formatFitbitSyncStamp(syncedAt))
         return
@@ -1998,6 +2008,8 @@ function App() {
         connected: true,
         lastSyncedAt: payload.metrics?.synced_at ?? new Date().toISOString(),
         latestMetrics: payload.metrics ?? null,
+        nativeAvailable: false,
+        nativePermissionsGranted: false,
       })
       setFitbitMessage(formatFitbitSyncStamp(payload.metrics?.synced_at ?? new Date().toISOString()))
     } catch (error) {
@@ -2018,6 +2030,8 @@ function App() {
           setFitbitBridge((current) => ({
             ...current,
             connected: status.permissionsGranted || current.connected,
+            nativeAvailable: status.available,
+            nativePermissionsGranted: status.permissionsGranted,
           }))
           setFitbitMessage(
             status.permissionsGranted
@@ -3002,7 +3016,7 @@ function App() {
                 <div className="fitbit-action-row">
                   <button type="button" className="fitbit-primary-button" onClick={connectFitbitBridge}>
                     {usesNativePhoneShell
-                      ? fitbitBridge.connected
+                      ? fitbitBridge.nativePermissionsGranted
                         ? 'Refresh phone permissions'
                         : 'Grant phone permissions'
                       : fitbitBridge.connected
@@ -3013,7 +3027,11 @@ function App() {
                     type="button"
                     className="fitbit-secondary-button"
                     onClick={() => void syncFitbitBridgeNow()}
-                    disabled={!fitbitBridge.connected || isFitbitSyncing}
+                    disabled={
+                      usesNativePhoneShell
+                        ? !fitbitBridge.nativePermissionsGranted || isFitbitSyncing
+                        : !fitbitBridge.connected || isFitbitSyncing
+                    }
                   >
                     {isFitbitSyncing ? 'Syncing…' : usesNativePhoneShell ? 'Sync from this phone' : 'Pull latest phone data'}
                   </button>

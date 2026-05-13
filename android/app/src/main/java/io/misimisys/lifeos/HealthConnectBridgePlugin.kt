@@ -25,6 +25,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
@@ -133,7 +134,9 @@ class HealthConnectBridgePlugin : Plugin() {
 
                 val snapshot = readTodaySnapshot()
                 val syncedAt = Instant.now().toString()
-                uploadSnapshot(snapshot, syncedAt)
+                withContext(Dispatchers.IO) {
+                    uploadSnapshot(snapshot, syncedAt)
+                }
 
                 call.resolve(
                     JSObject().apply {

@@ -5,6 +5,9 @@ const DEFAULT_ALLOWED_ORIGINS = [
   'http://127.0.0.1:5174',
   'http://localhost:5173',
   'http://localhost:5174',
+  'http://localhost',
+  'https://localhost',
+  'capacitor://localhost',
   'https://misimisys.github.io',
   'https://jideatom.github.io',
 ]
@@ -60,10 +63,13 @@ function allowedOrigins() {
   const configured = process.env.LIFEOS_ALLOWED_ORIGIN
   if (!configured) return DEFAULT_ALLOWED_ORIGINS
 
-  return configured
-    .split(',')
-    .map((origin) => origin.trim())
-    .filter(Boolean)
+  return [...new Set([
+    ...configured
+      .split(',')
+      .map((origin) => origin.trim())
+      .filter(Boolean),
+    ...DEFAULT_ALLOWED_ORIGINS,
+  ])]
 }
 
 export function isAllowedOrigin(origin) {
