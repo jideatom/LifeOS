@@ -66,6 +66,11 @@ function allowedOrigins() {
     .filter(Boolean)
 }
 
+export function isAllowedOrigin(origin) {
+  if (!origin) return true
+  return allowedOrigins().includes(origin)
+}
+
 export function setCors(request, response) {
   const requestOrigin = request.headers.origin
   const allowed = allowedOrigins()
@@ -115,6 +120,8 @@ function supabaseAdmin() {
     auth: { persistSession: false, autoRefreshToken: false },
   })
 }
+
+export { supabaseAdmin }
 
 export async function exchangeAuthorizationCode(code) {
   const response = await fetch('https://oauth2.googleapis.com/token', {
