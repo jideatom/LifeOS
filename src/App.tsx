@@ -1289,7 +1289,7 @@ function App() {
   const [workoutLog, setWorkoutLog] = useState(storedWorkoutLogInitialValue)
   const [liftProgress, setLiftProgress] = useState(storedLiftProgressInitialValue)
   const [mealTimelineByDate, setMealTimelineByDate] = useState(storedMealTimelineInitialValue)
-  const [mealRecipeTab, setMealRecipeTab] = useState<'timeline' | 'recipes' | 'command'>('timeline')
+  const [mealRecipeTab, setMealRecipeTab] = useState<'timeline' | 'recipes'>('timeline')
   const [recipeFilter, setRecipeFilter] = useState<(typeof RECIPE_FILTERS)[number]>('All')
   const [recipes, setRecipes] = useState(storedRecipesInitialValue)
   const [editingMealId, setEditingMealId] = useState<string | null>(null)
@@ -1689,6 +1689,19 @@ function App() {
       detail: 'Also avoid afang, ogbono, oha, nsala, miyan kuka/taushe and tuwo shinkafa.',
     },
   ]
+  const nutritionHighlights = [
+    { label: 'Mode', value: log.nutritionMode },
+    { label: 'Meals', value: `${displayedMeals.length}` },
+    { label: 'Recipes', value: `${recipes.filter((recipe) => recipe.carbSignal === 'Low').length}` },
+    { label: 'Fallback', value: 'Eggs / gizzard' },
+  ]
+  const challengeDaysLeft = useMemo(() => {
+    if (!challengeSnapshot) return focusedChallenge.durationDays
+    const today = dateIsoToAnchor(selectedDate).getTime()
+    const deadline = dateIsoToAnchor(challengeSnapshot.deadline).getTime()
+    const diff = Math.floor((deadline - today) / 86400000)
+    return Math.max(0, diff + 1)
+  }, [challengeSnapshot, focusedChallenge.durationDays, selectedDate])
 
   useEffect(() => {
     const timer = window.setInterval(() => setClock(new Date()), 1000)
@@ -3190,6 +3203,22 @@ function App() {
               <Apple size={20} aria-hidden="true" />
               <h2>Nutrition</h2>
             </div>
+            <div className="nutrition-command-strip" aria-label="Nutrition command">
+              {nutritionHighlights.map((item) => (
+                <section className="nutrition-chip" key={item.label}>
+                  <span>{item.label}</span>
+                  <strong>{item.value}</strong>
+                </section>
+              ))}
+            </div>
+            <div className="nutrition-rule-grid nutrition-rule-grid-embedded nutrition-rule-grid-inline">
+              {nutritionRules.map((rule) => (
+                <section className={`nutrition-rule ${rule.label === 'Avoid' ? 'nutrition-avoid' : ''}`} key={rule.label}>
+                  <span>{rule.label}</span>
+                  <strong>{rule.value}</strong>
+                </section>
+              ))}
+            </div>
             <div className="meal-recipe-tabs" aria-label="Nutrition sections">
               <button
                 type="button"
@@ -3204,13 +3233,6 @@ function App() {
                 onClick={() => setMealRecipeTab('recipes')}
               >
                 Recipes
-              </button>
-              <button
-                type="button"
-                className={mealRecipeTab === 'command' ? 'active' : ''}
-                onClick={() => setMealRecipeTab('command')}
-              >
-                Command
               </button>
             </div>
             {mealRecipeTab === 'timeline' ? (
@@ -3253,7 +3275,7 @@ function App() {
                   ))}
                 </div>
               </>
-            ) : mealRecipeTab === 'recipes' ? (
+            ) : (
               <>
                 <p className="recipe-sync-note">{recipeSyncMessage}</p>
                 <div className="recipe-action-row">
@@ -3309,15 +3331,6 @@ function App() {
                   ))}
                 </div>
               </>
-            ) : (
-              <div className="nutrition-rule-grid nutrition-rule-grid-embedded">
-                {nutritionRules.map((rule) => (
-                  <section className={`nutrition-rule ${rule.label === 'Avoid' ? 'nutrition-avoid' : ''}`} key={rule.label}>
-                    <span>{rule.label}</span>
-                    <strong>{rule.value}</strong>
-                  </section>
-                ))}
-              </div>
             )}
           </article>
 
@@ -3357,6 +3370,20 @@ function App() {
                 <strong>{challengeSnapshot?.challenge.reward ?? focusedChallenge.reward}</strong>
               </section>
             </div>
+            <div className="challenge-support-grid">
+              <section>
+                <span>Qualified</span>
+                <strong>{challengeSnapshot?.qualifiedFasts.length ?? 0}</strong>
+              </section>
+              <section>
+                <span>Days left</span>
+                <strong>{challengeDaysLeft}</strong>
+              </section>
+              <section>
+                <span>Training this month</span>
+                <strong>{workoutStats.monthlyCompletions}</strong>
+              </section>
+            </div>
             <div className="challenge-card-actions">
               <button type="button" className="challenge-primary-button" onClick={() => openChallengeDetails()}>
                 {challengeSnapshot ? 'Open challenge' : 'Browse challenges'}
@@ -3393,6 +3420,24 @@ function App() {
               <CircleCheck size={20} aria-hidden="true" />
               <h2>Progress</h2>
             </div>
+            <div className="progress-overview-strip">
+              <article className="progress-overview-chip progress-fast-chip">
+                <span>Fast streak</span>
+                <strong>{progressSummary.fastingStreak}d</strong>
+              </article>
+              <article className="progress-overview-chip progress-fast-chip">
+                <span>Month fasts</span>
+                <strong>{fastingStats.monthlySessions}</strong>
+              </article>
+              <article className="progress-overview-chip progress-training-chip">
+                <span>Week workouts</span>
+                <strong>{workoutStats.weeklyCompletions}</strong>
+              </article>
+              <article className="progress-overview-chip progress-training-chip">
+                <span>Skipped</span>
+                <strong>{workoutStats.skippedSessions}</strong>
+              </article>
+            </div>
             <div className="progress-grid">
               <section className="progress-block progress-fasting">
                 <div className="progress-block-heading">
@@ -3400,10 +3445,6 @@ function App() {
                   <strong>{fastingStats.completedSessions} completed fasts</strong>
                 </div>
                 <div className="progress-stat-grid">
-                  <article className="progress-stat-card">
-                    <span>Current streak</span>
-                    <strong>{progressSummary.fastingStreak} days</strong>
-                  </article>
                   <article className="progress-stat-card">
                     <span>Longest fast</span>
                     <strong>{formatTargetHours(fastingStats.longestFast)}h</strong>
@@ -3413,44 +3454,25 @@ function App() {
                     <strong>{formatTargetHours(fastingStats.averageFast)}h</strong>
                   </article>
                   <article className="progress-stat-card">
-                    <span>This month</span>
-                    <strong>{fastingStats.monthlySessions}</strong>
+                    <span>Days logged</span>
+                    <strong>{fastingStats.fastingDays}</strong>
                   </article>
                 </div>
-                <div className="progress-subgrid">
-                  <section className="progress-list-card">
-                    <h3>Recent fasting records</h3>
-                    <div className="progress-list">
-                      {fastingHistory.slice(0, 5).map((entry) => (
-                        <article className="progress-list-row" key={entry.id}>
-                          <div>
-                            <strong>{entry.protocol}</strong>
-                            <p>{relativeDateLabel(entry.completedOn, selectedDate)}</p>
-                          </div>
-                          <span>{formatTargetHours(entry.actualHours)}h</span>
-                        </article>
-                      ))}
-                      {fastingHistory.length === 0 ? <p className="muted">Your completed fasts will stack here.</p> : null}
-                    </div>
-                  </section>
-                  <section className="progress-list-card">
-                    <h3>Protocol mix</h3>
-                    <div className="progress-list">
-                      {fastingStats.protocolBreakdown.map(([protocol, count]) => (
-                        <article className="progress-list-row" key={protocol}>
-                          <div>
-                            <strong>{protocol}</strong>
-                            <p>Completed sessions</p>
-                          </div>
-                          <span>{count}</span>
-                        </article>
-                      ))}
-                      {fastingStats.protocolBreakdown.length === 0 ? (
-                        <p className="muted">Protocol mix will appear once you log a few fasts.</p>
-                      ) : null}
-                    </div>
-                  </section>
-                </div>
+                <section className="progress-list-card progress-list-card-compact">
+                  <h3>Recent fasting records</h3>
+                  <div className="progress-list">
+                    {fastingHistory.slice(0, 3).map((entry) => (
+                      <article className="progress-list-row" key={entry.id}>
+                        <div>
+                          <strong>{entry.protocol}</strong>
+                          <p>{relativeDateLabel(entry.completedOn, selectedDate)}</p>
+                        </div>
+                        <span>{formatTargetHours(entry.actualHours)}h</span>
+                      </article>
+                    ))}
+                    {fastingHistory.length === 0 ? <p className="muted">No fasting records yet.</p> : null}
+                  </div>
+                </section>
               </section>
 
               <section className="progress-block progress-training">
@@ -3459,10 +3481,6 @@ function App() {
                   <strong>{workoutStats.totalSessions} completed sessions</strong>
                 </div>
                 <div className="progress-stat-grid">
-                  <article className="progress-stat-card">
-                    <span>Current streak</span>
-                    <strong>{progressSummary.trainingStreak} days</strong>
-                  </article>
                   <article className="progress-stat-card">
                     <span>This week</span>
                     <strong>{workoutStats.weeklyCompletions}</strong>
@@ -3477,10 +3495,10 @@ function App() {
                   </article>
                 </div>
                 <div className="progress-subgrid">
-                  <section className="progress-list-card">
+                  <section className="progress-list-card progress-list-card-compact">
                     <h3>Recent workouts</h3>
                     <div className="progress-list">
-                      {workoutLog.slice(0, 5).map((entry) => (
+                      {workoutLog.slice(0, 3).map((entry) => (
                         <article className="progress-list-row" key={entry.id}>
                           <div>
                             <strong>{entry.plan}</strong>
@@ -3491,13 +3509,13 @@ function App() {
                           <span>{entry.status}</span>
                         </article>
                       ))}
-                      {workoutLog.length === 0 ? <p className="muted">Logged training sessions will show here.</p> : null}
+                      {workoutLog.length === 0 ? <p className="muted">No workout records yet.</p> : null}
                     </div>
                   </section>
-                  <section className="progress-list-card">
+                  <section className="progress-list-card progress-list-card-compact">
                     <h3>Current working weights</h3>
                     <div className="progress-list">
-                      {progressSummary.topLiftChanges.map((lift) => (
+                      {progressSummary.topLiftChanges.slice(0, 3).map((lift) => (
                         <article className="progress-list-row" key={lift.label}>
                           <div>
                             <strong>{lift.label}</strong>
@@ -3508,7 +3526,7 @@ function App() {
                       ))}
                     </div>
                   </section>
-                  <section className="progress-list-card">
+                  <section className="progress-list-card progress-list-card-compact">
                     <h3>Workout mix</h3>
                     <div className="progress-list">
                       {workoutStats.planBreakdown.map(([plan, count]) => (
@@ -3521,7 +3539,7 @@ function App() {
                         </article>
                       ))}
                       {workoutStats.planBreakdown.length === 0 ? (
-                        <p className="muted">Once you log workouts, your plan mix will show up here.</p>
+                        <p className="muted">Workout mix builds as you log sessions.</p>
                       ) : null}
                     </div>
                   </section>

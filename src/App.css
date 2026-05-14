@@ -1121,15 +1121,51 @@ h3 {
   gap: 12px;
 }
 
+.progress-overview-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.progress-overview-chip {
+  padding: 10px 12px;
+  border: 1px solid rgba(23, 32, 29, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 253, 248, 0.88);
+}
+
+.progress-overview-chip span {
+  color: #63726d;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.progress-overview-chip strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 20px;
+  line-height: 1.1;
+}
+
+.progress-fast-chip {
+  border-left: 4px solid #1b5e59;
+}
+
+.progress-training-chip {
+  border-left: 4px solid #386f93;
+}
+
 .progress-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: start;
-  margin-top: 18px;
+  margin-top: 12px;
 }
 
 .progress-block {
   align-self: start;
-  padding: 14px;
+  padding: 12px;
   border: 1px solid rgba(23, 32, 29, 0.1);
   border-radius: 8px;
   background: rgba(255, 253, 248, 0.9);
@@ -1156,18 +1192,18 @@ h3 {
 .progress-block-heading strong {
   display: block;
   margin-top: 4px;
-  font-size: 18px;
+  font-size: 16px;
   line-height: 1.2;
 }
 
 .progress-stat-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   margin-top: 12px;
 }
 
 .progress-stat-card,
 .progress-list-card {
-  padding: 12px;
+  padding: 10px;
   border: 1px solid rgba(23, 32, 29, 0.1);
   border-radius: 8px;
   background: rgba(255, 253, 248, 0.86);
@@ -1175,12 +1211,12 @@ h3 {
 
 .progress-stat-card strong {
   display: block;
-  margin-top: 6px;
-  font-size: 18px;
+  margin-top: 4px;
+  font-size: 16px;
 }
 
 .progress-subgrid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   margin-top: 12px;
 }
 
@@ -1188,13 +1224,18 @@ h3 {
   grid-column: 1 / -1;
 }
 
+.progress-list-card-compact {
+  min-height: 0;
+}
+
 .progress-list-card h3 {
-  margin-bottom: 10px;
+  margin-bottom: 8px;
+  font-size: 16px;
 }
 
 .progress-list {
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .progress-list-row {
@@ -1202,7 +1243,7 @@ h3 {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 8px 0;
+  padding: 6px 0;
   border-top: 1px solid rgba(23, 32, 29, 0.08);
 }
 
@@ -1226,7 +1267,7 @@ h3 {
 .progress-list-row span {
   flex: 0 0 auto;
   color: #17201d;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 900;
 }
 
@@ -1287,13 +1328,45 @@ h3 {
 
 .meal-recipe-tabs {
   display: inline-grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px;
   margin-top: 14px;
   padding: 6px;
   border: 1px solid rgba(23, 32, 29, 0.1);
   border-radius: 10px;
   background: rgba(255, 253, 248, 0.82);
+}
+
+.nutrition-command-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.nutrition-chip {
+  padding: 10px 12px;
+  border: 1px solid rgba(23, 32, 29, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 253, 248, 0.9);
+}
+
+.nutrition-chip span {
+  color: #63726d;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.nutrition-chip strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 15px;
+  line-height: 1.25;
+}
+
+.nutrition-rule-grid-inline {
+  margin-top: 10px;
 }
 
 .meal-recipe-tabs button {
@@ -2557,6 +2630,36 @@ h3 {
   line-height: 1.2;
 }
 
+.challenge-support-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+  position: relative;
+  z-index: 1;
+}
+
+.challenge-support-grid section {
+  padding: 10px;
+  border: 1px solid rgba(23, 32, 29, 0.08);
+  border-radius: 8px;
+  background: rgba(255, 253, 248, 0.74);
+}
+
+.challenge-support-grid span {
+  color: #63726d;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.challenge-support-grid strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 15px;
+  line-height: 1.2;
+}
+
 .challenge-card-actions,
 .challenge-detail-actions {
   display: grid;
@@ -3322,11 +3425,14 @@ h3 {
   .recipe-filter-row,
   .recipe-editor-grid,
   .recipe-grid,
+  .progress-overview-strip,
   .challenge-summary-grid,
+  .challenge-support-grid,
   .challenge-option-grid,
   .progress-grid,
   .progress-stat-grid,
   .progress-subgrid,
+  .nutrition-command-strip,
   .metric-grid,
   .sync-summary,
   .fasting-stats-grid,
@@ -3359,6 +3465,15 @@ h3 {
   .meal-recipe-tabs button {
     padding-inline: 10px;
     font-size: 14px;
+  }
+
+  .progress-stat-grid,
+  .progress-subgrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .progress-subgrid .progress-list-card:last-child {
+    grid-column: 1 / -1;
   }
 
   .challenge-card-actions,
@@ -3421,6 +3536,18 @@ h3 {
   .meal-row,
   .phase-row {
     grid-template-columns: 1fr;
+  }
+
+  .nutrition-command-strip,
+  .challenge-summary-grid,
+  .challenge-support-grid,
+  .progress-stat-grid,
+  .progress-subgrid {
+    grid-template-columns: 1fr;
+  }
+
+  .progress-overview-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .meal-heading,
