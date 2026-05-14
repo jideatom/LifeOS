@@ -1446,15 +1446,16 @@ function App() {
               : 'Watch',
       },
       {
-        label: 'Zone mins',
+        label: 'Distance',
         value:
-          fitbitMetricsForSelectedDate.active_zone_minutes != null
-            ? `${fitbitMetricsForSelectedDate.active_zone_minutes}`
+          fitbitMetricsForSelectedDate.distance_km != null
+            ? fitbitMetricsForSelectedDate.distance_km.toFixed(2)
             : '--',
+        unit: 'km',
         status:
-          fitbitMetricsForSelectedDate.active_zone_minutes == null
+          fitbitMetricsForSelectedDate.distance_km == null
             ? 'Missing'
-            : fitbitMetricsForSelectedDate.active_zone_minutes >= 20
+            : fitbitMetricsForSelectedDate.distance_km >= 5
               ? 'Good'
               : 'Watch',
       },
@@ -2397,14 +2398,14 @@ function App() {
   const sleepMetric = syncMetrics.find((metric) => metric.label === 'Sleep')
   const caloriesMetric = syncMetrics.find((metric) => metric.label === 'Calories')
   const stepsMetric = syncMetrics.find((metric) => metric.label === 'Steps')
-  const zoneMetric = syncMetrics.find((metric) => metric.label === 'Zone mins')
+  const distanceMetric = syncMetrics.find((metric) => metric.label === 'Distance')
   const restingHrMetric = syncMetrics.find((metric) => metric.label === 'Resting HR')
   const weightMetric = syncMetrics.find((metric) => metric.label === 'Weight')
   const hasImportedPhoneMetric = Boolean(
     sleepMetric?.value !== '—' ||
       caloriesMetric?.value !== '—' ||
       stepsMetric?.value !== '—' ||
-      zoneMetric?.value !== '—' ||
+      distanceMetric?.value !== '—' ||
       restingHrMetric?.value !== '—' ||
       weightMetric?.value !== '—',
   )
@@ -2557,7 +2558,7 @@ function App() {
           { label: 'Sleep', value: sleepMetric ? `${sleepMetric.value}${sleepMetric.unit ?? ''}` : '--' },
           { label: 'Calories', value: caloriesMetric ? `${caloriesMetric.value}${caloriesMetric.unit ?? ''}` : '--' },
           { label: 'Steps', value: currentSteps > 0 ? currentSteps.toLocaleString() : '--' },
-          { label: 'Zone', value: zoneMetric?.value ?? '--' },
+          { label: 'Distance', value: distanceMetric ? `${distanceMetric.value}${distanceMetric.unit ?? ''}` : '--' },
         ],
       cta: stepGoalHit
         ? `Daily movement floor achieved. ${restingHrMetric ? `Resting HR is ${restingHrMetric.value}${restingHrMetric.unit ?? ''}.` : ''}`.trim()
