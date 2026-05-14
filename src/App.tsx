@@ -1405,12 +1405,18 @@ function App() {
         status: metricStatus(fitbitMetricsForSelectedDate.sleep_hours, 7, 6),
       },
       {
-        label: 'Sleep score',
+        label: 'Calories',
         value:
-          fitbitMetricsForSelectedDate.sleep_score != null
-            ? `${fitbitMetricsForSelectedDate.sleep_score}`
+          fitbitMetricsForSelectedDate.calories_burned != null
+            ? fitbitMetricsForSelectedDate.calories_burned.toLocaleString('en-NG')
             : '--',
-        status: fitbitMetricsForSelectedDate.sleep_score != null ? 'Watch' : 'Missing',
+        unit: 'cal',
+        status:
+          fitbitMetricsForSelectedDate.calories_burned == null
+            ? 'Missing'
+            : fitbitMetricsForSelectedDate.calories_burned >= 2000
+              ? 'Good'
+              : 'Watch',
       },
       {
         label: 'Resting HR',
@@ -2389,12 +2395,14 @@ function App() {
   const sleepScore = log.sleepScore ?? 0
   const restingHeartRate = log.restingHeartRate ?? 0
   const sleepMetric = syncMetrics.find((metric) => metric.label === 'Sleep')
+  const caloriesMetric = syncMetrics.find((metric) => metric.label === 'Calories')
   const stepsMetric = syncMetrics.find((metric) => metric.label === 'Steps')
   const zoneMetric = syncMetrics.find((metric) => metric.label === 'Zone mins')
   const restingHrMetric = syncMetrics.find((metric) => metric.label === 'Resting HR')
   const weightMetric = syncMetrics.find((metric) => metric.label === 'Weight')
   const hasImportedPhoneMetric = Boolean(
     sleepMetric?.value !== '—' ||
+      caloriesMetric?.value !== '—' ||
       stepsMetric?.value !== '—' ||
       zoneMetric?.value !== '—' ||
       restingHrMetric?.value !== '—' ||
@@ -2545,11 +2553,12 @@ function App() {
       trend: hasSupabaseConfig ? (stepGoalHit ? 'good' : 'neutral') : 'watch',
       targetId: 'sync' as const,
       eyebrow: 'Google Health / Health Connect',
-      metrics: [
-        { label: 'Sleep', value: sleepMetric ? `${sleepMetric.value}${sleepMetric.unit ?? ''}` : '--' },
-        { label: 'Steps', value: currentSteps > 0 ? currentSteps.toLocaleString() : '--' },
-        { label: 'Zone', value: zoneMetric?.value ?? '--' },
-      ],
+        metrics: [
+          { label: 'Sleep', value: sleepMetric ? `${sleepMetric.value}${sleepMetric.unit ?? ''}` : '--' },
+          { label: 'Calories', value: caloriesMetric ? `${caloriesMetric.value}${caloriesMetric.unit ?? ''}` : '--' },
+          { label: 'Steps', value: currentSteps > 0 ? currentSteps.toLocaleString() : '--' },
+          { label: 'Zone', value: zoneMetric?.value ?? '--' },
+        ],
       cta: stepGoalHit
         ? `Daily movement floor achieved. ${restingHrMetric ? `Resting HR is ${restingHrMetric.value}${restingHrMetric.unit ?? ''}.` : ''}`.trim()
         : `Google Health data is now the cleanest web-app path for verifying whether today reaches your step minimum.`,
