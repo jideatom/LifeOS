@@ -172,8 +172,10 @@ class HealthConnectBridgePlugin : Plugin() {
         val zone = ZoneId.systemDefault()
         val now = Instant.now()
         val startOfDay = ZonedDateTime.now(zone).toLocalDate().atStartOfDay(zone).toInstant()
+        val startOfYesterday = ZonedDateTime.now(zone).toLocalDate().minusDays(1).atStartOfDay(zone).toInstant()
         val lastMonth = now.minus(Duration.ofDays(30))
         val lastWeek = now.minus(Duration.ofDays(7))
+        val recentSleepWindowStart = now.minus(Duration.ofHours(36))
 
         val aggregate = client.aggregate(
             AggregateRequest(
@@ -189,7 +191,9 @@ class HealthConnectBridgePlugin : Plugin() {
         val sleepSessions = client.readRecords(
             ReadRecordsRequest(
                 recordType = SleepSessionRecord::class,
-                timeRangeFilter = TimeRangeFilter.between(startOfDay, now),
+                timeRangeFilter = TimeRangeFilter.between(recentSleepWindowStart, now),
+                ascendingOrder = false,
+                pageSize = 20,
             )
         ).records
 
@@ -218,18 +222,17 @@ class HealthConnectBridgePlugin : Plugin() {
             )
         ).records
 
-        val totalSleepHours = if (sleepSessions.isEmpty()) {
-            null
-        } else {
-            sleepSessions.fold(Duration.ZERO) { total, session ->
-                total.plus(Duration.between(session.startTime, session.endTime))
-            }.toMinutes() / 60.0
+        val mostRecentCompletedSleepSession = sleepSessions
+            .filter { it.endTime.isAfter(startOfYesterday) && it.endTime.isBefore(now.plusSeconds(1)) }
+            .maxByOrNull { it.endTime }
+
+        val totalSleepHours = mostRecentCompletedSleepSession?.let { session ->
+            Duration.between(session.startTime, session.endTime).toMinutes() / 60.0
         }
 
         val totalWorkoutMinutes = exerciseSessions
             .map { Duration.between(it.startTime, it.endTime).toMinutes().toInt() }
             .sum()
-            .takeIf { it > 0 }
 
         return NativePhoneHealthSnapshot(
             date = ZonedDateTime.now(zone).toLocalDate().toString(),
@@ -237,10 +240,10 @@ class HealthConnectBridgePlugin : Plugin() {
             sleepHours = totalSleepHours,
             sleepScore = null,
             restingHeartRate = restingHeartRateRecords.firstOrNull()?.beatsPerMinute?.toDouble()?.roundToInt(),
-            steps = aggregate[StepsRecord.COUNT_TOTAL]?.toInt(),
-            activeZoneMinutes = null,
-            caloriesBurned = aggregate[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.inKilocalories?.roundToInt(),
-            distanceKm = aggregate[DistanceRecord.DISTANCE_TOTAL]?.inKilometers,
+            steps = aggregate[StepsRecord.COUNT_TOTAL]?.toInt() ?: 0,
+            activeZoneMinutes = totalWorkoutMinutes,
+            caloriesBurned = aggregate[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.inKilocalories?.roundToInt() ?: 0,
+            distanceKm = aggregate[DistanceRecord.DISTANCE_TOTAL]?.inKilometers ?: 0.0,
             workoutMinutes = totalWorkoutMinutes,
             weightKg = weightRecords.firstOrNull()?.weight?.inKilograms,
         )
