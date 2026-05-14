@@ -170,13 +170,29 @@ class HealthConnectBridgePlugin : Plugin() {
     private suspend fun readTodaySnapshot(): NativePhoneHealthSnapshot {
         val client = healthClient()
         val zone = ZoneId.systemDefault()
-        val now = Instant.now()
-        val startOfDay = ZonedDateTime.now(zone).toLocalDate().atStartOfDay(zone).toInstant()
-        val startOfYesterday = ZonedDateTime.now(zone).toLocalDate().minusDays(1).atStartOfDay(zone).toInstant()
-        val lastMonth = now.minus(Duration.ofDays(30))
-        val lastWeek = now.minus(Duration.ofDays(7))
-        val recentSleepWindowStart = now.minus(Duration.ofHours(36))
+        val nowZoned = ZonedDateTime.now(zone)
+        val now = nowZoned.toInstant()
+        val startOfDay = nowZoned.toLocalDate().atStartOfDay(zone).toInstant()
+        val startOfYesterday = nowZoned.toLocalDate().minusDays(1).atStartOfDay(zone).toInstant()
 
+        return readWindowSnapshot(
+            client = client,
+            windowStart = startOfDay,
+            windowEnd = now,
+            displayDate = nowZoned.toLocalDate().toString(),
+            sleepFloor = startOfYesterday,
+            now = now,
+        )
+    }
+
+    private suspend fun readWindowSnapshot(
+        client: HealthConnectClient,
+        windowStart: Instant,
+        windowEnd: Instant,
+        displayDate: String,
+        sleepFloor: Instant,
+        now: Instant,
+    ): NativePhoneHealthSnapshot {
         val aggregate = client.aggregate(
             AggregateRequest(
                 metrics = setOf(
@@ -184,14 +200,14 @@ class HealthConnectBridgePlugin : Plugin() {
                     DistanceRecord.DISTANCE_TOTAL,
                     TotalCaloriesBurnedRecord.ENERGY_TOTAL,
                 ),
-                timeRangeFilter = TimeRangeFilter.between(startOfDay, now),
+                timeRangeFilter = TimeRangeFilter.between(windowStart, windowEnd),
             )
         )
 
         val stepRecords = client.readRecords(
             ReadRecordsRequest(
                 recordType = StepsRecord::class,
-                timeRangeFilter = TimeRangeFilter.between(startOfDay, now),
+                timeRangeFilter = TimeRangeFilter.between(windowStart, windowEnd),
                 ascendingOrder = false,
                 pageSize = 5_000,
             )
@@ -200,7 +216,7 @@ class HealthConnectBridgePlugin : Plugin() {
         val distanceRecords = client.readRecords(
             ReadRecordsRequest(
                 recordType = DistanceRecord::class,
-                timeRangeFilter = TimeRangeFilter.between(startOfDay, now),
+                timeRangeFilter = TimeRangeFilter.between(windowStart, windowEnd),
                 ascendingOrder = false,
                 pageSize = 5_000,
             )
@@ -209,7 +225,7 @@ class HealthConnectBridgePlugin : Plugin() {
         val calorieRecords = client.readRecords(
             ReadRecordsRequest(
                 recordType = TotalCaloriesBurnedRecord::class,
-                timeRangeFilter = TimeRangeFilter.between(startOfDay, now),
+                timeRangeFilter = TimeRangeFilter.between(windowStart, windowEnd),
                 ascendingOrder = false,
                 pageSize = 5_000,
             )
@@ -218,7 +234,7 @@ class HealthConnectBridgePlugin : Plugin() {
         val sleepSessions = client.readRecords(
             ReadRecordsRequest(
                 recordType = SleepSessionRecord::class,
-                timeRangeFilter = TimeRangeFilter.between(recentSleepWindowStart, now),
+                timeRangeFilter = TimeRangeFilter.between(sleepFloor, now),
                 ascendingOrder = false,
                 pageSize = 20,
             )
@@ -227,14 +243,14 @@ class HealthConnectBridgePlugin : Plugin() {
         val exerciseSessions = client.readRecords(
             ReadRecordsRequest(
                 recordType = ExerciseSessionRecord::class,
-                timeRangeFilter = TimeRangeFilter.between(startOfDay, now),
+                timeRangeFilter = TimeRangeFilter.between(windowStart, windowEnd),
             )
         ).records
 
         val weightRecords = client.readRecords(
             ReadRecordsRequest(
                 recordType = WeightRecord::class,
-                timeRangeFilter = TimeRangeFilter.between(lastMonth, now),
+                timeRangeFilter = TimeRangeFilter.between(now.minus(Duration.ofDays(30)), now),
                 ascendingOrder = false,
                 pageSize = 1,
             )
@@ -243,14 +259,14 @@ class HealthConnectBridgePlugin : Plugin() {
         val restingHeartRateRecords = client.readRecords(
             ReadRecordsRequest(
                 recordType = RestingHeartRateRecord::class,
-                timeRangeFilter = TimeRangeFilter.between(lastWeek, now),
+                timeRangeFilter = TimeRangeFilter.between(now.minus(Duration.ofDays(7)), now),
                 ascendingOrder = false,
                 pageSize = 1,
             )
         ).records
 
         val mostRecentCompletedSleepSession = sleepSessions
-            .filter { it.endTime.isAfter(startOfYesterday) && it.endTime.isBefore(now.plusSeconds(1)) }
+            .filter { it.endTime.isAfter(sleepFloor) && it.endTime.isBefore(now.plusSeconds(1)) }
             .maxByOrNull { it.endTime }
 
         val totalSleepHours = mostRecentCompletedSleepSession?.let { session ->
@@ -273,7 +289,7 @@ class HealthConnectBridgePlugin : Plugin() {
         val aggregateCalories = aggregate[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.inKilocalories?.roundToInt()
 
         return NativePhoneHealthSnapshot(
-            date = ZonedDateTime.now(zone).toLocalDate().toString(),
+            date = displayDate,
             source = "Phone Health Sync",
             sleepHours = totalSleepHours,
             sleepScore = null,
