@@ -188,6 +188,33 @@ class HealthConnectBridgePlugin : Plugin() {
             )
         )
 
+        val stepRecords = client.readRecords(
+            ReadRecordsRequest(
+                recordType = StepsRecord::class,
+                timeRangeFilter = TimeRangeFilter.between(startOfDay, now),
+                ascendingOrder = false,
+                pageSize = 5_000,
+            )
+        ).records
+
+        val distanceRecords = client.readRecords(
+            ReadRecordsRequest(
+                recordType = DistanceRecord::class,
+                timeRangeFilter = TimeRangeFilter.between(startOfDay, now),
+                ascendingOrder = false,
+                pageSize = 5_000,
+            )
+        ).records
+
+        val calorieRecords = client.readRecords(
+            ReadRecordsRequest(
+                recordType = TotalCaloriesBurnedRecord::class,
+                timeRangeFilter = TimeRangeFilter.between(startOfDay, now),
+                ascendingOrder = false,
+                pageSize = 5_000,
+            )
+        ).records
+
         val sleepSessions = client.readRecords(
             ReadRecordsRequest(
                 recordType = SleepSessionRecord::class,
@@ -234,16 +261,27 @@ class HealthConnectBridgePlugin : Plugin() {
             .map { Duration.between(it.startTime, it.endTime).toMinutes().toInt() }
             .sum()
 
+        val rawStepTotal = stepRecords.sumOf { it.count.toLong() }.takeIf { it > 0 }?.toInt()
+        val rawDistanceKm = distanceRecords.sumOf { it.distance.inKilometers }.takeIf { it > 0.0 }
+        val rawCalories = calorieRecords
+            .sumOf { it.energy.inKilocalories }
+            .takeIf { it > 0.0 }
+            ?.roundToInt()
+
+        val aggregateSteps = aggregate[StepsRecord.COUNT_TOTAL]?.toInt()
+        val aggregateDistanceKm = aggregate[DistanceRecord.DISTANCE_TOTAL]?.inKilometers
+        val aggregateCalories = aggregate[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.inKilocalories?.roundToInt()
+
         return NativePhoneHealthSnapshot(
             date = ZonedDateTime.now(zone).toLocalDate().toString(),
             source = "Phone Health Sync",
             sleepHours = totalSleepHours,
             sleepScore = null,
             restingHeartRate = restingHeartRateRecords.firstOrNull()?.beatsPerMinute?.toDouble()?.roundToInt(),
-            steps = aggregate[StepsRecord.COUNT_TOTAL]?.toInt() ?: 0,
+            steps = maxOf(aggregateSteps ?: 0, rawStepTotal ?: 0),
             activeZoneMinutes = totalWorkoutMinutes,
-            caloriesBurned = aggregate[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.inKilocalories?.roundToInt() ?: 0,
-            distanceKm = aggregate[DistanceRecord.DISTANCE_TOTAL]?.inKilometers ?: 0.0,
+            caloriesBurned = maxOf(aggregateCalories ?: 0, rawCalories ?: 0),
+            distanceKm = maxOf(aggregateDistanceKm ?: 0.0, rawDistanceKm ?: 0.0),
             workoutMinutes = totalWorkoutMinutes,
             weightKg = weightRecords.firstOrNull()?.weight?.inKilograms,
         )
